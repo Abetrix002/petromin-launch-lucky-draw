@@ -1,0 +1,258 @@
+<title>Super Stars Lucky Draw Entry</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Arabic:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;500;700&display=swap">
+<style>
+/* Layout: one phone column. Maroon app-header band, form card floating over its edge, client's white prize cards below. */
+:root {
+  color-scheme: light;
+  --ink: #170A0E; --ink-2: #210D14; --red: #CE0E2D; --gold: #E6B103; --gold-pale: #F5E6A3;
+  --paper: #FFF8F2; --card: #FFFFFF; --line: #E3D0C1; --line-gold: #F5E6A3;
+  --text: #252525; --text-2: #6B585A; --error: #B42318; --error-bg: #FDEAE8; --ok: #12915A;
+  --display: "Space Grotesk", "Noto Sans Arabic", system-ui, sans-serif;
+  --ui: Inter, "Noto Sans Arabic", system-ui, sans-serif;
+  --gutter-l: max(20px, env(safe-area-inset-left, 0px));
+  --gutter-r: max(20px, env(safe-area-inset-right, 0px));
+}
+* { box-sizing: border-box; }
+body { background: var(--ink); color: var(--text); font: 400 16px/1.5 var(--ui); }
+.page { max-width: 480px; min-height: 100vh; margin-inline: auto; background: var(--paper); padding-bottom: 88px; }
+:lang(ar) h1, :lang(ar) h2, :lang(ar) .no { letter-spacing: 0; }
+
+.band { position: relative; overflow: hidden; color: #fff; border-radius: 0 0 36px 36px;
+  padding: 18px var(--gutter-r) 84px var(--gutter-l);
+  background: radial-gradient(420px 380px at 18% 42%, rgba(206,14,45,.42), transparent 72%), linear-gradient(90deg, var(--ink), var(--ink-2) 52%, var(--ink)); }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.logo { height: 76px; width: auto; display: block; }
+.lang { min-height: 44px; padding: 0 16px; border: 0; border-radius: 12px; background: rgba(255,255,255,.12); color: #fff; font: 600 14px var(--ui); cursor: pointer; }
+.pill { display: inline-flex; align-items: center; gap: 6px; margin-top: 18px; padding: 6px 12px; border-radius: 999px; font: 700 12px var(--ui); letter-spacing: .06em; text-transform: uppercase; color: var(--ink); background: linear-gradient(90deg, var(--gold-pale), var(--gold)); }
+:lang(ar) .pill { letter-spacing: 0; font-size: 13px; }
+.pill svg { width: 14px; height: 14px; fill: currentColor; }
+h1 { margin: 12px 0 0; font: 300 32px/1.18 var(--display); letter-spacing: .3px; text-wrap: balance; outline: none; }
+h1 b { font-weight: 700; color: #fff; }
+.sub { margin: 10px 0 0; color: #EFE3E5; font-size: 15px; }
+
+main { position: relative; margin-top: -60px; padding: 0 var(--gutter-r) 0 var(--gutter-l); display: grid; gap: 28px; }
+.card { background: var(--card); border-radius: 20px; padding: 20px; box-shadow: 0 10px 28px rgba(60,20,28,.14); min-width: 0; }
+form { display: grid; gap: 16px; }
+label.f { display: block; margin-bottom: 6px; font-weight: 600; font-size: 15px; }
+input[type=text], input[type=tel] { width: 100%; height: 56px; padding: 0 14px; border: 1.5px solid var(--line); border-radius: 12px; background: #fff; color: var(--text); font: 500 17px var(--ui); }
+input::placeholder { color: #8A7779; font-weight: 400; }
+input:focus-visible, button:focus-visible, summary:focus-visible, a:focus-visible { outline: 3px solid var(--red); outline-offset: 2px; }
+.tel { display: flex; direction: ltr; }
+.tel span { display: flex; align-items: center; padding: 0 14px; border: 1.5px solid var(--line); border-right: 0; border-radius: 12px 0 0 12px; background: #FFF4EA; font: 600 17px var(--ui); }
+.tel input { border-radius: 0 12px 12px 0; }
+.bad input[type=text], .bad input[type=tel], .bad .tel span { border-color: var(--error); }
+.err { display: none; margin: 6px 0 0; color: var(--error); font-size: 14px; font-weight: 500; }
+.bad .err { display: block; }
+.consent { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; color: var(--text); }
+.consent input { width: 24px; height: 24px; margin: 0; flex: none; accent-color: var(--red); }
+details.rules { font-size: 14px; color: var(--text-2); }
+details.rules summary { min-height: 32px; font-weight: 600; color: var(--red); cursor: pointer; }
+details.rules ul { margin: 6px 0 0; padding-inline-start: 18px; display: grid; gap: 4px; }
+.btn { display: flex; width: 100%; min-height: 56px; align-items: center; justify-content: center; gap: 10px; border: 0; border-radius: 999px; background: linear-gradient(90deg, var(--gold-pale), var(--gold)); color: var(--ink); font: 700 17px var(--ui); cursor: pointer; }
+.btn[disabled] { opacity: .75; cursor: progress; }
+.spin { width: 20px; height: 20px; border-radius: 50%; border: 3px solid rgba(23,10,14,.25); border-top-color: var(--ink); animation: r .8s linear infinite; }
+@keyframes r { to { transform: rotate(360deg); } }
+.banner { padding: 12px 14px; border-radius: 12px; background: var(--error-bg); color: var(--error); font-size: 14px; font-weight: 500; }
+
+h2 { margin: 0 0 12px; font: 700 20px/1.2 var(--display); letter-spacing: .2px; }
+.prizes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.prize { display: grid; justify-items: center; align-content: start; gap: 8px; padding: 12px 6px; background: #fff; border: 1px solid var(--line-gold); border-radius: 12px; text-align: center; font: 700 13px/1.2 var(--display); min-width: 0; }
+.prize img { height: 64px; width: 100%; object-fit: contain; }
+
+.ticket { padding: 0; overflow: hidden;
+  -webkit-mask: radial-gradient(circle 12px at 0 var(--notch), transparent 98%, #000) , radial-gradient(circle 12px at 100% var(--notch), transparent 98%, #000); -webkit-mask-composite: source-in;
+  mask: radial-gradient(circle 12px at 0 var(--notch), transparent 98%, #000), radial-gradient(circle 12px at 100% var(--notch), transparent 98%, #000); mask-composite: intersect; --notch: 124px; }
+.t1 { height: 124px; display: grid; align-content: center; justify-items: center; }
+.t2 { border-top: 2px dashed var(--line); padding: 16px 20px 20px; text-align: center; }
+.lbl { font-size: 14px; color: var(--text-2); }
+.no { font: 700 56px/1.05 var(--display); color: var(--red); font-variant-numeric: tabular-nums; }
+.shown { font: 700 24px/1.3 var(--display); }
+.shown bdi { color: var(--text-2); font-weight: 500; }
+ol.next { margin: 0; padding: 0; list-style: none; display: grid; gap: 14px; counter-reset: s; }
+ol.next li { counter-increment: s; display: grid; grid-template-columns: 36px 1fr; gap: 12px; align-items: center; font-size: 15px; }
+ol.next li::before { content: counter(s); width: 36px; height: 36px; display: grid; place-items: center; border-radius: 50%; background: #FCE8EB; color: var(--red); font: 700 16px var(--display); }
+.link { color: var(--red); font-weight: 600; }
+
+.rv { position: fixed; z-index: 20; right: max(12px, env(safe-area-inset-right, 0px)); bottom: calc(12px + env(safe-area-inset-bottom, 0px)); direction: ltr; font: 500 13px Inter, system-ui, sans-serif; background: #fff; color: #252525; border-radius: 14px; box-shadow: 0 6px 24px rgba(0,0,0,.35); }
+.rv summary { padding: 10px 14px; cursor: pointer; font-weight: 600; }
+.rv div { display: grid; padding: 0 8px 8px; width: 220px; }
+.rv button { text-align: left; min-height: 34px; padding: 0 8px; border: 0; border-radius: 8px; background: none; font: inherit; color: inherit; cursor: pointer; }
+.rv button[aria-current=true] { background: #FCE8EB; color: #A50A23; font-weight: 700; }
+.rv small { padding: 6px 8px 0; color: #6B585A; }
+.rv a { padding: 6px 8px; color: #A50A23; font-weight: 700; }
+@media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
+</style>
+
+<div class="page">
+  <header class="band">
+    <div class="top">
+      <img class="logo" src="assets/logo.png" alt="Super Stars, powered by Petromin Lubricants">
+      <button class="lang" id="langBtn" type="button"></button>
+    </div>
+    <div class="pill"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg><span id="eyebrow"></span></div>
+    <h1 id="title" tabindex="-1"></h1>
+    <p class="sub" id="sub"></p>
+  </header>
+
+  <main>
+    <section class="card" id="formCard">
+      <form id="form" novalidate>
+        <div class="banner" id="offline" role="alert" hidden></div>
+        <div id="nameRow">
+          <label class="f" for="name" id="nameL"></label>
+          <input type="text" id="name" name="name" autocomplete="name" aria-describedby="nameE">
+          <p class="err" id="nameE"></p>
+        </div>
+        <div id="phoneRow">
+          <label class="f" for="phone" id="phoneL"></label>
+          <div class="tel"><span>+966</span><input type="tel" id="phone" name="phone" inputmode="numeric" autocomplete="tel-national" placeholder="5X XXX XXXX" dir="ltr" aria-describedby="phoneE"></div>
+          <p class="err" id="phoneE"></p>
+        </div>
+        <div id="consentRow">
+          <div class="consent"><input type="checkbox" id="consent" aria-describedby="consentE"><label for="consent" id="consentL"></label></div>
+          <p class="err" id="consentE"></p>
+        </div>
+        <details class="rules"><summary id="rulesT"></summary><ul id="rules"></ul></details>
+        <button class="btn" id="submit" type="submit"></button>
+      </form>
+    </section>
+    <div id="result" hidden style="display:grid;gap:28px"></div>
+    <section id="prizeSec"><h2 id="prizesT"></h2><div class="prizes" id="prizes"></div></section>
+  </main>
+</div>
+
+<details class="rv"><summary>States</summary><div id="rv"></div></details>
+
+<script src="draw.js"></script>
+<script>
+const WHEEL_URL = "https://claude.ai/artifact/S49LunrwRVqKxp8qF3QKK4";
+const PRIZES = [
+  ["chest", "Tool chest", "صندوق عدّة"], ["headphones", "Headphones", "سماعات رأس"], ["drill", "Cordless drill", "دريل لاسلكي"],
+  ["giftcard", "Gift card", "بطاقة هدايا"], ["watch", "Smart watch", "ساعة ذكية"], ["suitcase", "Suitcase", "حقيبة سفر"],
+];
+const SITE = "https://superstars.petrolubegroup.com";
+const T = {
+  en: {
+    other: "العربية", eyebrow: "Launch event lucky draw",
+    h: "Enter the draw. <b>Win at the launch.</b>", sub: "Free to enter. One entry per mobile number.",
+    name: "Full name", namePh: "Type your name", phone: "Mobile number",
+    consent: "I agree that Petromin can use my name and mobile number to run this draw and contact me if I win.",
+    rulesT: "Draw rules", rules: ["Entry is free. One entry per mobile number.", "Winners are picked at random on the big screen.", "You must be in the hall when your name is called.", "Each person can win one prize.", "We use your details only for this draw."],
+    submit: "Enter the draw", sending: "Sending your entry…", prizes: "What you can win",
+    eName: "Enter your name so the host can call it out.", ePhone: "Enter a Saudi mobile number that starts with 5, like 5X XXX XXXX.", eConsent: "Tick this box to join the draw.",
+    offline: "We couldn't send your entry. Your details are still here. Check your connection and try again.", retry: "Try again",
+    okH: f => `You're in, <b>${f}.</b>`, okSub: "Your entry is in the draw. Keep this page open.",
+    alH: "You're <b>already in the draw.</b>", alSub: "This mobile number has an entry, so there is nothing more to do.",
+    closedH: "Entries are <b>closed.</b>", closedSub: "The draw has started. Watch the big screen to see the winners.",
+    entry: "Your entry number", shown: "On the big screen, look for",
+    nextT: "What happens next", next: ["Stay in the hall until the draw ends.", "Watch the big screen as names are drawn.", "If your name appears, come to the stage to collect your prize."],
+    learn: "Learn about Super Stars",
+  },
+  ar: {
+    other: "English", eyebrow: "سحب حفل الإطلاق",
+    h: "سجّل في السحب <b>واربح في حفل الإطلاق.</b>", sub: "المشاركة مجانية. مشاركة واحدة لكل رقم جوال.",
+    name: "الاسم الكامل", namePh: "اكتب اسمك", phone: "رقم الجوال",
+    consent: "أوافق على أن تستخدم بترومين اسمي ورقم جوالي لإجراء هذا السحب والتواصل معي إذا فزت.",
+    rulesT: "شروط السحب", rules: ["المشاركة مجانية، ومشاركة واحدة لكل رقم جوال.", "يتم اختيار الفائزين عشوائيًا على الشاشة الكبيرة.", "يجب أن تكون في القاعة عند إعلان اسمك.", "يمكن لكل شخص الفوز بجائزة واحدة.", "نستخدم بياناتك لهذا السحب فقط."],
+    submit: "سجّل في السحب", sending: "جارٍ إرسال مشاركتك…", prizes: "الجوائز",
+    eName: "اكتب اسمك حتى يناديك المقدّم.", ePhone: "اكتب رقم جوال سعودي يبدأ بالرقم 5، مثل 5X XXX XXXX.", eConsent: "ضع علامة في المربع للمشاركة في السحب.",
+    offline: "تعذّر إرسال مشاركتك. بياناتك ما زالت هنا. تأكد من الاتصال وحاول مرة أخرى.", retry: "حاول مرة أخرى",
+    okH: f => `تم تسجيلك يا <b>${f}.</b>`, okSub: "مشاركتك دخلت السحب. أبقِ هذه الصفحة مفتوحة.",
+    alH: "أنت <b>مسجّل في السحب.</b>", alSub: "هذا الرقم له مشاركة بالفعل، ولا تحتاج إلى فعل شيء آخر.",
+    closedH: "انتهى <b>التسجيل.</b>", closedSub: "بدأ السحب. تابع الشاشة الكبيرة لمعرفة الفائزين.",
+    entry: "رقم مشاركتك", shown: "على الشاشة الكبيرة، ابحث عن",
+    nextT: "ماذا بعد؟", next: ["ابقَ في القاعة حتى نهاية السحب.", "تابع الشاشة الكبيرة أثناء سحب الأسماء.", "إذا ظهر اسمك، توجّه إلى المسرح لاستلام جائزتك."],
+    learn: "تعرّف على سوبر ستارز",
+  },
+};
+const SAMPLE = { en: "Ahmed Al Ghamdi", ar: "أحمد الغامدي" };
+const STATES = [["form","Form"],["errors","Validation errors"],["submitting","Submitting"],["success","You're in"],["already","Already registered"],["closed","Registration closed"],["offline","No connection"]];
+const $ = id => document.getElementById(id);
+// ponytail: in-memory stand-in for the entries table; 50 123 4417 is the seeded duplicate.
+const registered = new Map([["501234417", 112]]);
+let lang = "ar", state = "form", timer, nextNo = 249, entry = null;
+
+function paint() {
+  const t = T[lang], root = document.documentElement;
+  root.lang = lang; root.dir = lang === "ar" ? "rtl" : "ltr";
+  $("langBtn").textContent = t.other; $("langBtn").lang = lang === "ar" ? "en" : "ar";
+  $("eyebrow").textContent = t.eyebrow;
+  $("nameL").textContent = t.name; $("name").placeholder = t.namePh; $("phoneL").textContent = t.phone;
+  $("consentL").textContent = t.consent; $("rulesT").textContent = t.rulesT;
+  $("rules").innerHTML = t.rules.map(r => `<li>${r}</li>`).join("");
+  $("nameE").textContent = t.eName; $("phoneE").textContent = t.ePhone; $("consentE").textContent = t.eConsent;
+  $("prizesT").textContent = t.prizes;
+  $("prizes").innerHTML = PRIZES.map(p => `<div class="prize"><img src="assets/${p[0]}.png" alt=""><span>${p[lang === "ar" ? 2 : 1]}</span></div>`).join("");
+  const head = { success: [t.okH(first()), t.okSub], already: [t.alH, t.alSub], closed: [t.closedH, t.closedSub] }[state] || [t.h, t.sub];
+  $("title").innerHTML = head[0]; $("sub").textContent = head[1];
+
+  const isForm = ["form", "errors", "submitting", "offline"].includes(state);
+  $("formCard").hidden = !isForm; $("prizeSec").hidden = !isForm;
+  $("offline").hidden = state !== "offline"; $("offline").textContent = t.offline;
+  const b = $("submit"); b.disabled = state === "submitting";
+  b.innerHTML = state === "submitting" ? `<span class="spin"></span>${t.sending}` : state === "offline" ? t.retry : t.submit;
+  $("result").hidden = isForm; $("result").style.display = isForm ? "none" : "grid"; $("result").innerHTML = isForm ? "" : resultHTML(t);
+  document.querySelectorAll("#rv button").forEach(x => { if (x.dataset.s) x.setAttribute("aria-current", x.dataset.s === state); else x.setAttribute("aria-current", x.dataset.l === lang); });
+  try { history.replaceState(null, "", "#" + lang + "-" + state); } catch {}
+}
+const first = () => entry ? Draw.publicName(entry.name).split(" ").slice(0, -1).join(" ") || entry.name : "";
+
+function resultHTML(t) {
+  if (state === "closed") return `<section class="card" style="text-align:center"><a class="link" href="${SITE}" target="_blank" rel="noopener">${t.learn}</a></section>`;
+  const e = entry;
+  return `<section class="card ticket"><div class="t1"><div class="lbl">${t.entry}</div><div class="no">#${e.no}</div></div>
+    <div class="t2"><div class="lbl">${t.shown}</div><div class="shown">${Draw.publicName(e.name)} <bdi dir="ltr">••••${Draw.lastFour(e.phone)}</bdi></div></div></section>
+    <section class="card"><h2>${t.nextT}</h2><ol class="next">${t.next.map(s => `<li>${s}</li>`).join("")}</ol></section>
+    <p style="margin:0;text-align:center"><a class="link" href="${SITE}" target="_blank" rel="noopener">${t.learn}</a></p>`;
+}
+
+function clearErrors() { ["nameRow", "phoneRow", "consentRow"].forEach(i => $(i).classList.remove("bad")); ["name", "phone", "consent"].forEach(i => $(i).removeAttribute("aria-invalid")); }
+function validate() {
+  clearErrors();
+  const bad = [];
+  if (!$("name").value.trim()) bad.push(["nameRow", "name"]);
+  if (!Draw.normalizePhone($("phone").value)) bad.push(["phoneRow", "phone"]);
+  if (!$("consent").checked) bad.push(["consentRow", "consent"]);
+  bad.forEach(([r, i]) => { $(r).classList.add("bad"); $(i).setAttribute("aria-invalid", "true"); });
+  return bad;
+}
+
+function set(s) { clearTimeout(timer); state = s; paint(); }
+function settle() {
+  const phone = Draw.normalizePhone($("phone").value), name = $("name").value.trim();
+  const known = registered.has(phone);
+  const no = known ? registered.get(phone) : nextNo++;
+  registered.set(phone, no); entry = { name, phone, no };
+  set(known ? "already" : "success"); window.scrollTo(0, 0); $("title").focus({ preventScroll: true });
+}
+$("form").addEventListener("submit", ev => {
+  ev.preventDefault();
+  if (state === "submitting") return;
+  const bad = validate();
+  if (bad.length) { state = "errors"; paint(); $(bad[0][1]).focus(); return; }
+  set("submitting"); timer = setTimeout(settle, 1100);
+});
+["name", "phone"].forEach(i => $(i).addEventListener("input", () => $(i + "Row").classList.remove("bad")));
+$("consent").addEventListener("change", () => $("consentRow").classList.remove("bad"));
+$("langBtn").addEventListener("click", () => { lang = lang === "ar" ? "en" : "ar"; paint(); });
+
+// Reviewer jump: fills realistic values so each state is complete on its own.
+function jump(s) {
+  clearErrors();
+  if (s === "form") { $("form").reset(); }
+  if (s === "errors") { $("form").reset(); $("phone").value = "12345"; validate(); }
+  if (s === "submitting" || s === "offline") { $("name").value = SAMPLE[lang]; $("phone").value = "55 678 1290"; $("consent").checked = true; }
+  if (s === "success") entry = { name: SAMPLE[lang], phone: "556781290", no: 249 };
+  if (s === "already") entry = { name: SAMPLE[lang], phone: "501234417", no: 112 };
+  if (s === "submitting") { set(s); return; }
+  set(s);
+}
+$("rv").innerHTML = [["ar","Arabic"],["en","English"]].map(l => `<button type="button" data-l="${l[0]}">${l[1]}</button>`).join("") + STATES.map(s => `<button type="button" data-s="${s[0]}">${s[1]}</button>`).join("") + `<a href="${WHEEL_URL}" target="_blank" rel="noopener">Open big screen</a><small>Sample prizes. Nothing is stored. Try 50 123 4417 to see the duplicate message.</small>`;
+$("rv").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; if (b.dataset.l) { lang = b.dataset.l; if (entry) entry.name = SAMPLE[lang]; if (["errors","submitting","offline"].includes(state)) $("name").value = state === "errors" ? "" : SAMPLE[lang]; paint(); } else jump(b.dataset.s); });
+
+const m = location.hash.match(/^#(ar|en)-([a-z]+)$/);
+if (m) lang = m[1];
+jump(m && STATES.some(s => s[0] === m[2]) ? m[2] : "form");
+</script>
