@@ -3,7 +3,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Arabic:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;500;700&display=swap">
 <style>
-/* Layout: one phone column. Maroon app-header band, form card floating over its edge, client's white prize cards below. */
+/* Layout: one phone column. Maroon app-header band, form card floating over its edge. */
 :root {
   color-scheme: light;
   --ink: #170A0E; --ink-2: #210D14; --red: #CE0E2D; --gold: #E6B103; --gold-pale: #F5E6A3;
@@ -43,6 +43,7 @@ input:focus-visible, button:focus-visible, summary:focus-visible, a:focus-visibl
 .tel span { display: flex; align-items: center; padding: 0 14px; border: 1.5px solid var(--line); border-right: 0; border-radius: 12px 0 0 12px; background: #FFF4EA; font: 600 17px var(--ui); }
 .tel input { border-radius: 0 12px 12px 0; }
 .bad input[type=text], .bad input[type=tel], .bad .tel span { border-color: var(--error); }
+.help { margin: 6px 0 0; color: var(--text-2); font-size: 13.5px; }
 .err { display: none; margin: 6px 0 0; color: var(--error); font-size: 14px; font-weight: 500; }
 .bad .err { display: block; }
 .consent { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; color: var(--text); }
@@ -57,9 +58,6 @@ details.rules ul { margin: 6px 0 0; padding-inline-start: 18px; display: grid; g
 .banner { padding: 12px 14px; border-radius: 12px; background: var(--error-bg); color: var(--error); font-size: 14px; font-weight: 500; }
 
 h2 { margin: 0 0 12px; font: 700 20px/1.2 var(--display); letter-spacing: .2px; }
-.prizes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-.prize { display: grid; justify-items: center; align-content: start; gap: 8px; padding: 12px 6px; background: #fff; border: 1px solid var(--line-gold); border-radius: 12px; text-align: center; font: 700 13px/1.2 var(--display); min-width: 0; }
-.prize img { height: 64px; width: 100%; object-fit: contain; }
 
 .ticket { padding: 0; overflow: hidden;
   -webkit-mask: radial-gradient(circle 12px at 0 var(--notch), transparent 98%, #000) , radial-gradient(circle 12px at 100% var(--notch), transparent 98%, #000); -webkit-mask-composite: source-in;
@@ -102,12 +100,14 @@ ol.next li::before { content: counter(s); width: 36px; height: 36px; display: gr
         <div class="banner" id="offline" role="alert" hidden></div>
         <div id="nameRow">
           <label class="f" for="name" id="nameL"></label>
-          <input type="text" id="name" name="name" autocomplete="name" aria-describedby="nameE">
+          <input type="text" id="name" name="name" autocomplete="name" aria-describedby="nameH nameE">
+          <p class="help" id="nameH"></p>
           <p class="err" id="nameE"></p>
         </div>
         <div id="phoneRow">
           <label class="f" for="phone" id="phoneL"></label>
-          <div class="tel"><span>+966</span><input type="tel" id="phone" name="phone" inputmode="numeric" autocomplete="tel-national" placeholder="5X XXX XXXX" dir="ltr" aria-describedby="phoneE"></div>
+          <div class="tel"><span>+966</span><input type="tel" id="phone" name="phone" inputmode="numeric" autocomplete="tel-national" placeholder="5X XXX XXXX" dir="ltr" aria-describedby="phoneH phoneE"></div>
+          <p class="help" id="phoneH"></p>
           <p class="err" id="phoneE"></p>
         </div>
         <div id="consentRow">
@@ -119,7 +119,6 @@ ol.next li::before { content: counter(s); width: 36px; height: 36px; display: gr
       </form>
     </section>
     <div id="result" hidden style="display:grid;gap:28px"></div>
-    <section id="prizeSec"><h2 id="prizesT"></h2><div class="prizes" id="prizes"></div></section>
   </main>
 </div>
 
@@ -127,43 +126,41 @@ ol.next li::before { content: counter(s); width: 36px; height: 36px; display: gr
 
 <script src="draw.js"></script>
 <script>
-const WHEEL_URL = "https://claude.ai/artifact/S49LunrwRVqKxp8qF3QKK4";
-const PRIZES = [
-  ["chest", "Tool chest", "صندوق عدّة"], ["headphones", "Headphones", "سماعات رأس"], ["drill", "Cordless drill", "دريل لاسلكي"],
-  ["giftcard", "Gift card", "بطاقة هدايا"], ["watch", "Smart watch", "ساعة ذكية"], ["suitcase", "Suitcase", "حقيبة سفر"],
-];
+const SCREEN_URL = "https://claude.ai/artifact/S49LunrwRVqKxp8qF3QKK4";
 const SITE = "https://superstars.petrolubegroup.com";
 const T = {
   en: {
-    other: "العربية", eyebrow: "Launch event lucky draw",
-    h: "Enter the draw. <b>Win at the launch.</b>", sub: "Free to enter. One entry per mobile number.",
-    name: "Full name", namePh: "Type your name", phone: "Mobile number",
-    consent: "I agree that Petromin can use my name and mobile number to run this draw and contact me if I win.",
-    rulesT: "Draw rules", rules: ["Entry is free. One entry per mobile number.", "Winners are picked at random on the big screen.", "You must be in the hall when your name is called.", "Each person can win one prize.", "We use your details only for this draw."],
-    submit: "Enter the draw", sending: "Sending your entry…", prizes: "What you can win",
-    eName: "Enter your name so the host can call it out.", ePhone: "Enter a Saudi mobile number that starts with 5, like 5X XXX XXXX.", eConsent: "Tick this box to join the draw.",
+    other: "العربية", eyebrow: "Launch event · Live draw",
+    h: "Be the name <b>the whole hall cheers for.</b>", sub: "It's free and takes under a minute. Names are drawn live on the big screen, and what you win stays a surprise.",
+    name: "Your name", namePh: "Type your name", phone: "Mobile number",
+    nameHelp: "On screen, we show your first name and family initial.", phoneHelp: "Only the last 4 digits appear on screen, so you know it's you.",
+    consent: "I agree that Petromin can use my name and mobile number to run this draw and contact me if my name is drawn.",
+    rulesT: "Draw rules", rules: ["Entry is free. One entry per mobile number.", "Names are picked at random on the big screen.", "You must be in the hall when your name is called.", "Each name can be drawn only once.", "We use your details only for this draw."],
+    submit: "Put my name in the draw", sending: "Adding your name…",
+    eName: "Enter your name so the host can call it out.", ePhone: "Enter a Saudi mobile number that starts with 5, like 5X XXX XXXX.", eConsent: "Tick this box to put your name in the draw.",
     offline: "We couldn't send your entry. Your details are still here. Check your connection and try again.", retry: "Try again",
-    okH: f => `You're in, <b>${f}.</b>`, okSub: "Your entry is in the draw. Keep this page open.",
-    alH: "You're <b>already in the draw.</b>", alSub: "This mobile number has an entry, so there is nothing more to do.",
-    closedH: "Entries are <b>closed.</b>", closedSub: "The draw has started. Watch the big screen to see the winners.",
-    entry: "Your entry number", shown: "On the big screen, look for",
-    nextT: "What happens next", next: ["Stay in the hall until the draw ends.", "Watch the big screen as names are drawn.", "If your name appears, come to the stage to collect your prize."],
+    okH: f => `You're in the draw, <b>${f}.</b>`, okSub: "Stay close. Your name could be the next one on the big screen.",
+    alH: "You're <b>already in the draw.</b>", alSub: "One entry per number, and yours is already in. Good luck!",
+    closedH: "Entries are <b>closed.</b>", closedSub: "The draw is underway. Watch the big screen to see whose name is called.",
+    entry: "Your entry number", shown: "Watch the big screen for",
+    nextT: "What happens next", next: ["Stay in the hall. Winners must be here when their name is called.", "Watch the big screen as names are drawn live.", "Hear your name? Come up to the stage."],
     learn: "Learn about Super Stars",
   },
   ar: {
-    other: "English", eyebrow: "سحب حفل الإطلاق",
-    h: "سجّل في السحب <b>واربح في حفل الإطلاق.</b>", sub: "المشاركة مجانية. مشاركة واحدة لكل رقم جوال.",
-    name: "الاسم الكامل", namePh: "اكتب اسمك", phone: "رقم الجوال",
-    consent: "أوافق على أن تستخدم بترومين اسمي ورقم جوالي لإجراء هذا السحب والتواصل معي إذا فزت.",
-    rulesT: "شروط السحب", rules: ["المشاركة مجانية، ومشاركة واحدة لكل رقم جوال.", "يتم اختيار الفائزين عشوائيًا على الشاشة الكبيرة.", "يجب أن تكون في القاعة عند إعلان اسمك.", "يمكن لكل شخص الفوز بجائزة واحدة.", "نستخدم بياناتك لهذا السحب فقط."],
-    submit: "سجّل في السحب", sending: "جارٍ إرسال مشاركتك…", prizes: "الجوائز",
-    eName: "اكتب اسمك حتى يناديك المقدّم.", ePhone: "اكتب رقم جوال سعودي يبدأ بالرقم 5، مثل 5X XXX XXXX.", eConsent: "ضع علامة في المربع للمشاركة في السحب.",
+    other: "English", eyebrow: "حفل الإطلاق · سحب مباشر",
+    h: "كن الاسم <b>الذي تهتف له القاعة.</b>", sub: "مجاني ويستغرق أقل من دقيقة. تُسحب الأسماء مباشرة على الشاشة الكبيرة، وما ستفوز به يبقى مفاجأة.",
+    name: "اسمك", namePh: "اكتب اسمك", phone: "رقم الجوال",
+    nameHelp: "نعرض على الشاشة اسمك الأول والحرف الأول من اسم العائلة.", phoneHelp: "تظهر آخر 4 أرقام فقط على الشاشة لتعرف أنه أنت.",
+    consent: "أوافق على أن تستخدم بترومين اسمي ورقم جوالي لإجراء هذا السحب والتواصل معي إذا تم سحب اسمي.",
+    rulesT: "شروط السحب", rules: ["المشاركة مجانية، ومشاركة واحدة لكل رقم جوال.", "يتم اختيار الأسماء عشوائيًا على الشاشة الكبيرة.", "يجب أن تكون في القاعة عند إعلان اسمك.", "يُسحب كل اسم مرة واحدة فقط.", "نستخدم بياناتك لهذا السحب فقط."],
+    submit: "أضف اسمي إلى السحب", sending: "جارٍ إضافة اسمك…",
+    eName: "اكتب اسمك حتى يناديك المقدّم.", ePhone: "اكتب رقم جوال سعودي يبدأ بالرقم 5، مثل 5X XXX XXXX.", eConsent: "ضع علامة في المربع لإضافة اسمك إلى السحب.",
     offline: "تعذّر إرسال مشاركتك. بياناتك ما زالت هنا. تأكد من الاتصال وحاول مرة أخرى.", retry: "حاول مرة أخرى",
-    okH: f => `تم تسجيلك يا <b>${f}.</b>`, okSub: "مشاركتك دخلت السحب. أبقِ هذه الصفحة مفتوحة.",
-    alH: "أنت <b>مسجّل في السحب.</b>", alSub: "هذا الرقم له مشاركة بالفعل، ولا تحتاج إلى فعل شيء آخر.",
-    closedH: "انتهى <b>التسجيل.</b>", closedSub: "بدأ السحب. تابع الشاشة الكبيرة لمعرفة الفائزين.",
-    entry: "رقم مشاركتك", shown: "على الشاشة الكبيرة، ابحث عن",
-    nextT: "ماذا بعد؟", next: ["ابقَ في القاعة حتى نهاية السحب.", "تابع الشاشة الكبيرة أثناء سحب الأسماء.", "إذا ظهر اسمك، توجّه إلى المسرح لاستلام جائزتك."],
+    okH: f => `اسمك في السحب يا <b>${f}.</b>`, okSub: "ابقَ قريبًا، فقد يكون اسمك التالي على الشاشة الكبيرة.",
+    alH: "أنت <b>مسجّل في السحب.</b>", alSub: "لكل رقم مشاركة واحدة، ومشاركتك موجودة بالفعل. بالتوفيق!",
+    closedH: "انتهى <b>التسجيل.</b>", closedSub: "السحب جارٍ الآن. تابع الشاشة الكبيرة لتعرف من سيُنادى اسمه.",
+    entry: "رقم مشاركتك", shown: "راقب الشاشة الكبيرة وابحث عن",
+    nextT: "ماذا بعد؟", next: ["ابقَ في القاعة، فالفائز يجب أن يكون حاضرًا عند إعلان اسمه.", "تابع الشاشة الكبيرة أثناء سحب الأسماء مباشرة.", "سمعت اسمك؟ تفضّل إلى المسرح."],
     learn: "تعرّف على سوبر ستارز",
   },
 };
@@ -179,17 +176,15 @@ function paint() {
   root.lang = lang; root.dir = lang === "ar" ? "rtl" : "ltr";
   $("langBtn").textContent = t.other; $("langBtn").lang = lang === "ar" ? "en" : "ar";
   $("eyebrow").textContent = t.eyebrow;
-  $("nameL").textContent = t.name; $("name").placeholder = t.namePh; $("phoneL").textContent = t.phone;
+  $("nameL").textContent = t.name; $("name").placeholder = t.namePh; $("phoneL").textContent = t.phone; $("nameH").textContent = t.nameHelp; $("phoneH").textContent = t.phoneHelp;
   $("consentL").textContent = t.consent; $("rulesT").textContent = t.rulesT;
   $("rules").innerHTML = t.rules.map(r => `<li>${r}</li>`).join("");
   $("nameE").textContent = t.eName; $("phoneE").textContent = t.ePhone; $("consentE").textContent = t.eConsent;
-  $("prizesT").textContent = t.prizes;
-  $("prizes").innerHTML = PRIZES.map(p => `<div class="prize"><img src="assets/${p[0]}.png" alt=""><span>${p[lang === "ar" ? 2 : 1]}</span></div>`).join("");
   const head = { success: [t.okH(first()), t.okSub], already: [t.alH, t.alSub], closed: [t.closedH, t.closedSub] }[state] || [t.h, t.sub];
   $("title").innerHTML = head[0]; $("sub").textContent = head[1];
 
   const isForm = ["form", "errors", "submitting", "offline"].includes(state);
-  $("formCard").hidden = !isForm; $("prizeSec").hidden = !isForm;
+  $("formCard").hidden = !isForm;
   $("offline").hidden = state !== "offline"; $("offline").textContent = t.offline;
   const b = $("submit"); b.disabled = state === "submitting";
   b.innerHTML = state === "submitting" ? `<span class="spin"></span>${t.sending}` : state === "offline" ? t.retry : t.submit;
@@ -249,7 +244,7 @@ function jump(s) {
   if (s === "submitting") { set(s); return; }
   set(s);
 }
-$("rv").innerHTML = [["ar","Arabic"],["en","English"]].map(l => `<button type="button" data-l="${l[0]}">${l[1]}</button>`).join("") + STATES.map(s => `<button type="button" data-s="${s[0]}">${s[1]}</button>`).join("") + `<a href="${WHEEL_URL}" target="_blank" rel="noopener">Open big screen</a><small>Sample prizes. Nothing is stored. Try 50 123 4417 to see the duplicate message.</small>`;
+$("rv").innerHTML = [["ar","Arabic"],["en","English"]].map(l => `<button type="button" data-l="${l[0]}">${l[1]}</button>`).join("") + STATES.map(s => `<button type="button" data-s="${s[0]}">${s[1]}</button>`).join("") + `<a href="${SCREEN_URL}" target="_blank" rel="noopener">Open big screen</a><small>Nothing is stored. Try 50 123 4417 to see the duplicate message.</small>`;
 $("rv").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; if (b.dataset.l) { lang = b.dataset.l; if (entry) entry.name = SAMPLE[lang]; if (["errors","submitting","offline"].includes(state)) $("name").value = state === "errors" ? "" : SAMPLE[lang]; paint(); } else jump(b.dataset.s); });
 
 const m = location.hash.match(/^#(ar|en)-([a-z]+)$/);

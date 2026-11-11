@@ -1,0 +1,420 @@
+<title>Super Stars 300-Winner Draw</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Arabic:wght@400;500;600;700&family=Space+Grotesk:wght@300;500;700&display=swap">
+<style>
+/* Layout: host bar on top, 1920×1080 stage below. Two scenes share the stage: the name wall (big rounds) and the night sky (ten-name draws and finale). */
+:root {
+  color-scheme: dark;
+  --ink: #170A0E; --ink-2: #210D14; --red: #CE0E2D; --gold: #E6B103; --gold-pale: #F5E6A3; --text-2: #E2D3D6;
+  --display: "Space Grotesk", "Noto Sans Arabic", system-ui, sans-serif;
+  --ui: Inter, "Noto Sans Arabic", system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: #0D0508; color: #fff; overflow: hidden; font: 400 15px/1.4 Inter, system-ui, sans-serif; }
+.ctl { position: fixed; z-index: 10; top: 0; left: 0; right: 0; min-height: 64px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; direction: ltr;
+  padding: 10px max(16px, env(safe-area-inset-right, 0px)) 10px max(16px, env(safe-area-inset-left, 0px)); background: #FBF7F4; color: #1E1316; border-bottom: 1px solid #EADBD3; }
+.seg { display: inline-flex; background: #F1E9E5; border-radius: 12px; padding: 3px; }
+.seg button { min-height: 38px; padding: 0 13px; border: 0; border-radius: 9px; background: none; color: #1E1316; font: 600 14px Inter, sans-serif; cursor: pointer; white-space: nowrap; }
+.seg button[aria-pressed=true] { background: #1E1316; color: #FBF7F4; }
+.go { min-height: 44px; padding: 0 22px; border: 0; border-radius: 999px; background: linear-gradient(90deg, #F5E6A3, #E6B103); color: #170A0E; font: 700 15px Inter, sans-serif; cursor: pointer; }
+.go:disabled { opacity: .45; cursor: progress; }
+.ghost { min-height: 40px; padding: 0 14px; border: 1px solid #D9C6BD; border-radius: 999px; background: #fff; color: #1E1316; font: 600 14px Inter, sans-serif; cursor: pointer; }
+.hint { flex: 1 1 240px; min-width: 0; font-size: 13px; color: #6B585A; }
+.ctl button:focus-visible { outline: 3px solid #A50A23; outline-offset: 2px; }
+
+#stage { position: absolute; width: 1920px; height: 1080px; transform-origin: 0 0; overflow: hidden; font: 400 32px/1.3 var(--ui);
+  background: radial-gradient(1200px 780px at 50% 50%, rgba(206,14,45,.38), transparent 72%), linear-gradient(90deg, var(--ink), var(--ink-2) 52%, var(--ink)); }
+#stage::after { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity .9s; z-index: 4;
+  background: radial-gradient(900px 620px at 50% 50%, rgba(245,200,60,.5), rgba(230,177,3,.1) 55%, transparent 75%); }
+#stage.tell::after { opacity: 1; }
+:lang(ar) #stage .pill, :lang(ar) #stage h1 { letter-spacing: 0; }
+.bar { position: absolute; z-index: 6; top: 36px; inset-inline: 70px; display: flex; align-items: center; justify-content: space-between; pointer-events: none; }
+.bar img { height: 100px; }
+.round { font: 600 30px var(--ui); color: var(--text-2); }
+.count { font: 500 32px var(--ui); color: var(--text-2); text-align: end; }
+.count b { font: 700 64px var(--display); color: var(--gold-pale); font-variant-numeric: tabular-nums; }
+.scene { position: absolute; inset: 0; transition: opacity .7s; }
+.scene.off { opacity: 0; pointer-events: none; }
+canvas { position: absolute; inset: 0; pointer-events: none; }
+#fx { z-index: 9; }
+.cap { position: absolute; z-index: 5; bottom: 34px; left: 0; right: 0; text-align: center; font: 500 38px var(--ui); color: var(--text-2); transition: opacity .4s; text-shadow: 0 0 18px #170A0E; }
+.pill { display: inline-flex; align-items: center; gap: 12px; padding: 12px 26px; border-radius: 999px; font: 700 28px var(--ui); letter-spacing: .05em; text-transform: uppercase; color: var(--ink); background: linear-gradient(90deg, var(--gold-pale), var(--gold)); }
+.pill svg { width: 28px; height: 28px; fill: currentColor; }
+
+/* Name wall */
+.tile { position: absolute; display: flex; align-items: center; justify-content: center; gap: 14px; border-radius: 4px; overflow: hidden; white-space: nowrap;
+  background: rgba(48,16,26,.85); color: #EADFD6; font-weight: 600; font-family: var(--ui); line-height: 1;
+  transition: left .9s cubic-bezier(.2,.8,.2,1), top .9s cubic-bezier(.2,.8,.2,1), width .9s cubic-bezier(.2,.8,.2,1), height .9s cubic-bezier(.2,.8,.2,1), font-size .9s, opacity .5s, background .3s, color .3s, box-shadow .3s; }
+.tile .no { display: none; }
+.tile.lit { background: linear-gradient(90deg, var(--gold-pale), var(--gold)); color: var(--ink); box-shadow: 0 0 18px rgba(245,200,60,.8); }
+.tile.won { background: #C99A12; color: var(--ink); }
+#wall.focus .tile:not(.card) { opacity: .1; }
+.tile.card { z-index: 2; flex-direction: column; justify-content: center; gap: 8px; padding: 0 10px; border-radius: 14px; background: #2A1017; color: #fff; box-shadow: inset 0 0 0 2px rgba(245,230,163,.6); }
+.tile.card .no { display: inline; font: 500 30px var(--ui); color: var(--gold-pale); font-variant-numeric: tabular-nums; }
+
+/* Sky: ten-name draw cards and the solo reveal */
+.pc { position: absolute; z-index: 2; perspective: 1000px; opacity: 0; transform: scale(.6); transition: opacity .3s, transform .45s cubic-bezier(.2,1.5,.4,1); }
+.pc.in { opacity: 1; transform: scale(1); }
+.pc .flip { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform .6s cubic-bezier(.3,.1,.2,1); }
+.pc.open .flip { transform: rotateY(180deg); }
+.face { position: absolute; inset: 0; border-radius: 22px; backface-visibility: hidden; display: grid; place-items: center; align-content: center; gap: 8px; text-align: center; padding: 0 14px; }
+.back { background: radial-gradient(circle at 50% 40%, #3A1620, #170A0E); box-shadow: inset 0 0 0 4px var(--gold); }
+.back img { width: 40%; }
+.front { transform: rotateY(180deg); background: #2A1017; box-shadow: inset 0 0 0 3px rgba(245,230,163,.6), 0 0 40px rgba(230,177,3,.25); }
+.front b { font: 700 46px/1.1 var(--display); white-space: nowrap; }
+.front span { font: 500 26px var(--ui); color: var(--gold-pale); font-variant-numeric: tabular-nums; }
+.pc.gold .front { background: linear-gradient(135deg, var(--gold-pale), var(--gold)); color: var(--ink); box-shadow: 0 0 80px rgba(245,200,60,.9); }
+.pc.gold .front span { color: var(--ink); }
+.rays { position: absolute; left: 50%; top: 47%; width: 2400px; height: 2400px; margin: -1200px 0 0 -1200px; border-radius: 50%; z-index: 1; opacity: 0; transition: opacity 1.2s;
+  background: repeating-conic-gradient(from 0deg, rgba(245,210,90,.24) 0 5deg, transparent 5deg 15deg);
+  -webkit-mask: radial-gradient(circle, #000 0 12%, transparent 58%); mask: radial-gradient(circle, #000 0 12%, transparent 58%); animation: spin 50s linear infinite; }
+.rays.on { opacity: 1; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.ring { position: absolute; z-index: 3; width: 320px; height: 320px; margin: -160px 0 0 -160px; border-radius: 50%; opacity: 0; pointer-events: none; border: 10px solid var(--gold-pale); box-shadow: 0 0 80px rgba(245,200,60,.9); }
+.flash { position: absolute; inset: 0; z-index: 7; background: #FFF8E1; opacity: 0; pointer-events: none; }
+.solo { position: absolute; z-index: 3; left: 0; right: 0; top: 230px; text-align: center; opacity: 0; transition: opacity .35s; }
+.solo.on { opacity: 1; }
+.sname { display: table; margin: 22px auto 0; font: 700 190px/1.1 var(--display); white-space: nowrap; text-shadow: 0 0 50px rgba(245,200,60,.65), 0 4px 34px rgba(23,10,14,.9); transition: filter 1.1s cubic-bezier(.2,.7,.2,1); }
+.sname.sil { filter: brightness(0) invert(1) blur(22px); }
+.stars { display: flex; justify-content: center; gap: 24px; margin-top: 14px; }
+.stars i { display: block; width: 70px; height: 70px; opacity: 0; transform: scale(0); filter: drop-shadow(0 0 18px rgba(245,200,60,.9)); }
+.stars i svg { width: 100%; height: 100%; fill: var(--gold-pale); }
+.stars i.on { animation: pop .55s cubic-bezier(.2,1.7,.4,1) forwards; }
+@keyframes pop { from { opacity: 0; transform: scale(0) rotate(-50deg); } to { opacity: 1; transform: scale(1) rotate(0); } }
+.sno { margin-top: 28px; font: 500 56px var(--ui); color: var(--gold-pale); opacity: 0; transition: opacity .6s; text-shadow: 0 0 20px #170A0E; }
+.scall { margin-top: 18px; font: 600 54px var(--ui); opacity: 0; transition: opacity .6s .2s; text-shadow: 0 0 20px #170A0E; }
+.solo.done .sno, .solo.done .scall { opacity: 1; }
+
+/* Title and end cards */
+.title { position: absolute; inset: 0; z-index: 6; display: grid; place-items: center; align-content: center; gap: 26px; text-align: center; padding: 0 160px;
+  background: radial-gradient(1000px 520px at 50% 50%, rgba(23,10,14,.82), rgba(23,10,14,.55) 70%, rgba(23,10,14,.3)); opacity: 0; pointer-events: none; transition: opacity .5s; }
+.title.on { opacity: 1; }
+.title h1 { margin: 0; font: 700 120px/1.05 var(--display); text-wrap: balance; }
+.title h1 span { font-weight: 300; }
+.title p { margin: 0; font-size: 42px; color: var(--text-2); }
+@media (prefers-reduced-motion: reduce) { .tile, .pc, .pc .flip, .sname, .stars i, .scene, .title { transition: none !important; animation: none !important; } }
+</style>
+
+<div class="ctl">
+  <button class="go" id="go" type="button"></button>
+  <div class="seg" role="group" aria-label="Jump to" id="jumps"></div>
+  <div class="seg" role="group" aria-label="Language" id="langs"></div>
+  <button class="ghost" id="snd" type="button"></button>
+  <button class="ghost" id="reset" type="button">Reset</button>
+  <span class="hint">Space runs the next step. Sample list of 1,000 guests, 300 winners. Big rounds show 25 names per page, sorted by entry number. Jump buttons fast-forward for review.</span>
+</div>
+<div id="stage">
+  <div class="bar"><img src="assets/logo.png" alt="Super Stars"><div class="round" id="round"></div><div class="count" id="count"></div></div>
+  <div class="scene" id="wall"></div>
+  <div class="scene off" id="sky"><canvas id="skyc" width="1920" height="1080"></canvas><div class="rays" id="rays"></div><div id="cards"></div>
+    <div class="solo" id="solo"><span class="pill" id="spill"></span><div class="sname" id="sname"></div><div class="stars" id="sstars"></div><div class="sno" id="sno"></div><div class="scall" id="scall"></div></div>
+    <div class="ring" id="ring1"></div><div class="ring" id="ring2"></div></div>
+  <div class="flash" id="flash"></div>
+  <div class="title" id="title"></div>
+  <div class="cap" id="cap"></div>
+  <canvas id="fx" width="1920" height="1080"></canvas>
+</div>
+
+<script src="draw.js"></script>
+<script>
+const STAR = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>`;
+const F = [["أحمد","Ahmed"],["محمد","Mohammed"],["خالد","Khalid"],["عبد الله","Abdullah"],["سعيد","Saeed"],["ياسر","Yasser"],["فهد","Fahad"],["ماجد","Majed"],["عمر","Omar"],["يوسف","Yousef"],["إبراهيم","Ibrahim"],["علي","Ali"],["حسن","Hassan"],["طارق","Tariq"],["ناصر","Nasser"],["سلطان","Sultan"],["وليد","Waleed"],["مصطفى","Mostafa"],["سامي","Sami"],["رامي","Rami"]];
+const L = [["الغامدي","Al Ghamdi"],["القحطاني","Al Qahtani"],["الحربي","Al Harbi"],["الزهراني","Al Zahrani"],["الشهري","Al Shehri"],["العتيبي","Al Otaibi"],["المالكي","Al Malki"],["منصور","Mansour"],["السيد","El Sayed"],["حسين","Hussein"],["صالح","Saleh"],["المطيري","Al Mutairi"],["الدوسري","Al Dosari"],["اليامي","Al Yami"],["عثمان","Othman"]];
+const ENTRIES = Array.from({ length: 1000 }, (_, i) => { const f = F[i % F.length], l = L[(i * 7 + (i >> 2)) % L.length]; return { id: i, ar: f[0] + " " + l[0], en: f[1] + " " + l[1] }; });
+// Run of show: 5 big rounds of 50, 4 ten-name draws, then the final 10 one at a time = 300 winners.
+const PLAN = [...Array(5).fill({ type: "batch", n: 50 }), ...Array(4).fill({ type: "ten", n: 10 }), ...Array(10).fill({ type: "solo", n: 1 })];
+const TOTAL = PLAN.reduce((s, r) => s + r.n, 0);
+const SEG = { batch: [0, 5], ten: [5, 4], solo: [9, 10] };
+
+const T = {
+  en: { round: (i, n) => `Round ${i} of ${n}`, page: n => `Page ${n} of 2`, count: n => `<b>${n}</b> / ${TOTAL} winners`,
+    eyebrow: { batch: "Big rounds", ten: "Ten at a time", solo: "The final ten" },
+    head: { batch: k => `Round ${k} of 5 <span>· 50 winners</span>`, ten: k => `Draw ${k} of 4 <span>· 10 winners</span>`, solo: k => k === 10 ? "The final winner" : `Winner ${k} <span>of the final ten</span>` },
+    sub: { batch: "Fifty names light up at once, then appear in order of entry number.", ten: "Ten stars fall. The last one lands alone.", solo: "One name at a time." },
+    btn: { batch: "Light up 50 names", page: "Show the next 25", ten: "Draw 10 names", solo: "Reveal the winner", next: "Next round", end: "Show all winners", again: "Start again" },
+    scan: "Drawing 50 names…", fall: "Stars are falling…", collect: "Find your entry number on your phone. Winners, collect your prize at the desk.",
+    winner: "Winner", final: "Final winner", call: "Please come to the stage", entry: n => `Entry #${n}`,
+    endEyebrow: "Draw complete", endHead: `All ${TOTAL} winners <span>drawn.</span>`, endSub: "Congratulations to every winner. Collect your prize at the desk with your entry number." },
+  ar: { round: (i, n) => `الجولة ${i} من ${n}`, page: n => `الصفحة ${n} من 2`, count: n => `الفائزون <b>${n}</b> من ${TOTAL}`,
+    eyebrow: { batch: "الجولات الكبرى", ten: "عشرة في كل سحب", solo: "الفائزون العشرة الأخيرون" },
+    head: { batch: k => `الجولة ${k} من 5 <span>· 50 فائزًا</span>`, ten: k => `السحب ${k} من 4 <span>· 10 فائزين</span>`, solo: k => k === 10 ? "الفائز الأخير" : `الفائز ${k} <span>من العشرة الأخيرين</span>` },
+    sub: { batch: "خمسون اسمًا تضيء معًا، ثم تظهر مرتبة حسب رقم المشاركة.", ten: "عشر نجمات تسقط، والأخيرة تهبط وحدها.", solo: "اسم واحد في كل مرة." },
+    btn: { batch: "Light up 50 names", page: "Show the next 25", ten: "Draw 10 names", solo: "Reveal the winner", next: "Next round", end: "Show all winners", again: "Start again" },
+    scan: "جارٍ سحب 50 اسمًا…", fall: "النجوم تسقط…", collect: "رقم مشاركتك موجود في جوالك. على الفائزين استلام الجوائز من المكتب.",
+    winner: "الفائز", final: "الفائز الأخير", call: "تفضل إلى المسرح", entry: n => `المشاركة رقم ${n}`,
+    endEyebrow: "انتهى السحب", endHead: `تم سحب جميع الفائزين <span>الـ${TOTAL}.</span>`, endSub: "مبروك لكل الفائزين. استلموا جوائزكم من المكتب مع رقم المشاركة." },
+};
+
+const $ = id => document.getElementById(id), stage = $("stage");
+const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const wait = ms => new Promise(r => setTimeout(r, calm ? 0 : ms));
+const pick = a => a[Math.floor(Math.random() * a.length)];
+const S = { lang: "ar", sound: true, busy: false, r: 0, phase: "title", shown: [], batch: [], page: 0 };
+const t = () => T[S.lang];
+const nm = e => Draw.publicName(e[S.lang]);
+const mirror = (x, w) => S.lang === "ar" ? 1920 - x - w : x; // Arabic fills cards right to left
+let D = Draw.createDraw(ENTRIES), shownCount = 0, K = 1, AC;
+
+function fit() { const top = document.querySelector(".ctl").offsetHeight, k = Math.min(innerWidth / 1920, (innerHeight - top) / 1080); K = k; stage.style.transform = `scale(${k})`; stage.style.left = (innerWidth - 1920 * k) / 2 + "px"; stage.style.top = top + (innerHeight - top - 1080 * k) / 2 + "px"; }
+addEventListener("resize", fit);
+
+function tone(f, d = .6, type = "sine", g = .18, delay = 0, to) {
+  if (!S.sound || calm) return;
+  try { AC ||= new AudioContext(); const o = AC.createOscillator(), v = AC.createGain(), t0 = AC.currentTime + delay;
+    o.type = type; o.frequency.setValueAtTime(f, t0); if (to) o.frequency.exponentialRampToValueAtTime(to, t0 + d);
+    v.gain.setValueAtTime(0, t0); v.gain.linearRampToValueAtTime(g, t0 + .02); v.gain.exponentialRampToValueAtTime(.0001, t0 + d);
+    o.connect(v).connect(AC.destination); o.start(t0); o.stop(t0 + d + .05); } catch {}
+}
+function confetti(n = 180) {
+  if (calm) return;
+  const c = $("fx"), x = c.getContext("2d"), cols = ["#F5E6A3", "#E6B103", "#CE0E2D", "#FF8300", "#FFFFFF"];
+  const ps = Array.from({ length: n }, () => ({ x: Math.random() * 1920, y: -40 - Math.random() * 500, v: 7 + Math.random() * 9, s: 9 + Math.random() * 13, r: Math.random() * 6, w: (Math.random() - .5) * .25, c: pick(cols) }));
+  const t0 = performance.now();
+  (function f(now) {
+    x.clearRect(0, 0, 1920, 1080);
+    ps.forEach(p => { p.y += p.v; p.r += p.w; x.save(); x.translate(p.x, p.y); x.rotate(p.r); x.fillStyle = p.c; x.beginPath(); for (let i = 0; i < 10; i++) { const a = i * Math.PI / 5, q = i % 2 ? p.s * .45 : p.s; x.lineTo(Math.sin(a) * q, -Math.cos(a) * q); } x.fill(); x.restore(); });
+    if (now - t0 < 3600) requestAnimationFrame(f); else x.clearRect(0, 0, 1920, 1080);
+  })(t0);
+}
+const flash = (o = 1) => $("flash").animate([{ opacity: o }, { opacity: 0 }], { duration: 900, easing: "ease-out" });
+function ring(x, y, big) {
+  [["ring1", 0, big ? 7 : 2.4], ["ring2", 220, big ? 5 : 1.6]].forEach(([id, delay, s]) => { const r = $(id); r.style.left = x + "px"; r.style.top = y + "px";
+    r.animate([{ opacity: 1, transform: "scale(.2)" }, { opacity: 0, transform: `scale(${s})` }], { duration: 1200, delay, easing: "cubic-bezier(.1,.6,.3,1)" }); });
+}
+
+/* Counter and round label */
+function setCount(n, animate) {
+  const from = shownCount; shownCount = n;
+  if (!animate || calm) { $("count").innerHTML = t().count(n); return; }
+  const t0 = performance.now(); (function f(now) { const p = Math.min(1, (now - t0) / 900); $("count").innerHTML = t().count(Math.round(from + (n - from) * p)); if (p < 1) requestAnimationFrame(f); })(t0);
+}
+const setRound = () => { $("round").textContent = S.phase === "end" ? "" : t().round(S.r + 1, PLAN.length) + (S.phase === "hold" && PLAN[S.r].type === "batch" ? " · " + t().page(S.page + 1) : ""); };
+const cap = (txt = "") => { $("cap").textContent = txt; $("cap").style.opacity = txt ? 1 : 0; };
+
+/* Name wall: every guest as a tile; winners stay gold, so the wall fills up over the night. */
+let tiles = [], byId = {}, fs = 8;
+function buildWall() {
+  const W = 1800, H = 780, x0 = 60, y0 = 170, g = 4, cols = Math.ceil(Math.sqrt(ENTRIES.length * W / H / 2.4)), rows = Math.ceil(ENTRIES.length / cols);
+  const tw = (W - g * (cols - 1)) / cols, th = (H - g * (rows - 1)) / rows; fs = Math.min(13.5, th * .6, tw / 6.2);
+  $("wall").innerHTML = ""; byId = {};
+  tiles = ENTRIES.map((e, i) => {
+    const el = document.createElement("div"); el.className = "tile"; el.innerHTML = `<span class="nm"></span><span class="no"></span>`;
+    const home = { left: x0 + (i % cols) * (tw + g), top: y0 + Math.floor(i / cols) * (th + g), width: tw, height: th };
+    const tl = { e, el, home, won: false }; place(tl, home, fs); $("wall").appendChild(el); byId[e.id] = tl; return tl;
+  });
+  labelTiles();
+}
+function place(tl, r, size) { Object.assign(tl.el.style, { left: r.left + "px", top: r.top + "px", width: r.width + "px", height: r.height + "px", fontSize: size + "px" }); }
+const labelTiles = () => tiles.forEach(tl => { tl.el.firstChild.textContent = nm(tl.e); tl.el.lastChild.textContent = "#" + (tl.e.id + 1); });
+const markWon = e => { const tl = byId[e.id]; tl.won = true; tl.el.classList.add("won"); };
+
+async function batchReveal(n) {
+  cap(t().scan);
+  const t0 = performance.now(), free = tiles.filter(x => !x.won);
+  while (performance.now() - t0 < (calm ? 0 : 2400)) { const lit = Array.from({ length: 80 }, () => pick(free)); lit.forEach(x => x.el.classList.add("lit")); tone(900 + Math.random() * 600, .08, "triangle", .03); await wait(100); lit.forEach(x => x.el.classList.remove("lit")); }
+  const win = [];
+  for (let i = 0; i < n; i++) { const e = D.pickWinner(); D.confirm(); win.push(byId[e.id]); }
+  win.sort((a, b) => a.e.id - b.e.id); S.batch = win; S.shown = win.map(x => x.e);
+  win.forEach(x => x.el.classList.add("lit")); [523, 659, 784, 1047].forEach((f, i) => tone(f, .7, "triangle", .14, i * .09));
+  await wait(800);
+  $("wall").classList.add("focus"); S.phase = "hold"; await showPage(0);
+  setCount(D.winners.length, true); confetti(120); cap(t().collect);
+}
+// Show 25 winners at a time (5×5) so names stay readable from the back of the hall; the previous page returns to the wall in gold.
+async function showPage(p) {
+  const cw = 328, ch = 138, g = 18, x0 = 100, y0 = 172;
+  tiles.filter(x => x.el.classList.contains("card")).forEach(x => { x.el.classList.remove("card"); markWon(x.e); place(x, x.home, fs); });
+  S.batch.slice(p * 25, p * 25 + 25).forEach((x, i) => { x.el.classList.remove("lit"); x.el.classList.add("card"); x.el.style.transitionDelay = `${i * 18}ms`;
+    place(x, { left: mirror(x0 + (i % 5) * (cw + g), cw), top: y0 + Math.floor(i / 5) * (ch + g), width: cw, height: ch }, 42); });
+  S.page = p; setRound(); tone(300, .9, "sine", .06, 0, 1200);
+  await wait(1400); S.batch.forEach(x => { x.el.style.transitionDelay = ""; });
+}
+async function batchClear() {
+  cap();
+  tiles.filter(x => x.el.classList.contains("card") || x.el.classList.contains("lit")).forEach((x, i) => { x.el.classList.remove("card", "lit"); markWon(x.e); x.el.style.transitionDelay = `${i * 10}ms`; place(x, x.home, fs); });
+  $("wall").classList.remove("focus"); await wait(1300);
+  tiles.forEach(x => { x.el.style.transitionDelay = ""; });
+}
+
+/* Night sky: starfield, warp and meteors on one canvas. */
+const sky = (() => {
+  const cx = $("skyc").getContext("2d"), bg = cx.createRadialGradient(960, 520, 60, 960, 520, 1150);
+  bg.addColorStop(0, "#3A0D1A"); bg.addColorStop(.55, "#1A070D"); bg.addColorStop(1, "#0B0306");
+  const stars = Array.from({ length: 420 }, () => ({ x: Math.random() * 1920 - 960, y: Math.random() * 1080 - 540, z: .2 + Math.random(), tw: Math.random() * 6 }));
+  let warp = 0, mets = [], on = false;
+  function frame(now) {
+    if (!on) return;
+    cx.globalAlpha = warp > .05 ? .32 : 1; cx.fillStyle = bg; cx.fillRect(0, 0, 1920, 1080); cx.globalAlpha = 1;
+    for (const s of stars) {
+      if (warp > .02) {
+        const px = s.x, py = s.y, k = 1 + warp * .055 * s.z; s.x *= k; s.y *= k;
+        cx.strokeStyle = `rgba(255,236,190,${.35 + .5 * s.z})`; cx.lineWidth = s.z * 2.2; cx.beginPath(); cx.moveTo(px + 960, py + 540); cx.lineTo(s.x + 960, s.y + 540); cx.stroke();
+        if (Math.abs(s.x) > 1000 || Math.abs(s.y) > 600) { s.x = (Math.random() - .5) * 160; s.y = (Math.random() - .5) * 100; }
+      } else { cx.fillStyle = `rgba(255,240,215,${.25 + .75 * Math.abs(Math.sin(now / 900 * s.z + s.tw))})`; cx.beginPath(); cx.arc(s.x + 960, s.y + 540, s.z * 1.7, 0, 7); cx.fill(); }
+    }
+    mets = mets.filter(m => meteor(m, now));
+    requestAnimationFrame(frame);
+  }
+  function meteor(m, now) {
+    const p = Math.min(1, Math.max(0, (now - m.t0) / m.dur)); if (now < m.t0) return true;
+    const e = 1 - (1 - p) ** 2.2, u = 1 - e, x = u * u * m.a[0] + 2 * u * e * m.c[0] + e * e * m.b[0], y = u * u * m.a[1] + 2 * u * e * m.c[1] + e * e * m.b[1];
+    m.pts.push([x, y]); if (m.pts.length > (m.big ? 52 : 30)) m.pts.shift();
+    const g = Math.round(255 - 45 * p), b = Math.round(255 - 195 * p), w = m.big ? 22 : 10;
+    cx.lineCap = "round";
+    m.pts.forEach((q, i) => { if (!i) return; const a = i / m.pts.length; cx.strokeStyle = `rgba(255,${g},${b},${a * .9})`; cx.lineWidth = 2 + a * w; cx.beginPath(); cx.moveTo(m.pts[i - 1][0], m.pts[i - 1][1]); cx.lineTo(q[0], q[1]); cx.stroke(); });
+    cx.save(); cx.shadowColor = `rgb(255,${g},${b})`; cx.shadowBlur = m.big ? 90 : 40; cx.fillStyle = "#FFFDF4"; cx.beginPath(); cx.arc(x, y, (m.big ? 18 : 9) + (m.big ? 14 : 5) * p, 0, 7); cx.fill(); cx.restore();
+    if (p >= 1) { m.done(); return false; }
+    return true;
+  }
+  const launch = (to, dur, big, delay = 0) => new Promise(done => {
+    const a = [1980 + Math.random() * 160, -100 - Math.random() * 120];
+    mets.push({ a, b: to, c: [(a[0] + to[0]) / 2 + 160, Math.min(a[1], to[1]) + 60], t0: performance.now() + (calm ? 0 : delay), dur: calm ? 1 : dur, pts: [], big, done });
+  });
+  const rampWarp = (to, ms) => new Promise(res => { const from = warp, t0 = performance.now(); if (calm) { warp = to; return res(); }
+    (function f(n) { const p = Math.min(1, (n - t0) / ms); warp = from + (to - from) * p * p * (3 - 2 * p); p < 1 ? requestAnimationFrame(f) : res(); })(t0); });
+  return { start() { if (!on) { on = true; requestAnimationFrame(frame); } }, stop() { on = false; }, launch, rampWarp };
+})();
+
+async function tenReveal() {
+  cap(t().fall);
+  const wins = []; for (let i = 0; i < 10; i++) { const e = D.pickWinner(); D.confirm(); markWon(e); wins.push(e); }
+  wins.sort((a, b) => a.id - b.id);
+  S.shown = wins;
+  const W = 310, H = 200, slot = i => ({ x: mirror(135 + (i % 5) * 340, 310), y: 300 + Math.floor(i / 5) * 240 });
+  $("cards").innerHTML = wins.map((e, i) => { const s = slot(i); return `<div class="pc" style="left:${s.x}px;top:${s.y}px;width:${W}px;height:${H}px"><div class="flip"><div class="face back"><img src="assets/logo.png" alt=""></div><div class="face front"><b></b><span></span></div></div></div>`; }).join("");
+  labelCards();
+  const cards = [...$("cards").children];
+  tone(110, 1.6, "sawtooth", .03, 0, 420); await sky.rampWarp(1, 900); sky.rampWarp(0, 900);
+  const notes = [523, 587, 659, 698, 784, 880, 988, 1047, 1175];
+  await Promise.all(cards.slice(0, 9).map((c, i) => { const s = slot(i); return sky.launch([s.x + W / 2, s.y + H / 2], 900, false, i * 170).then(async () => {
+    c.classList.add("in"); ring(s.x + W / 2, s.y + H / 2, false); tone(notes[i], .5, "triangle", .12); await wait(160); c.classList.add("open"); }); }));
+  cap(); await wait(900);
+  const last = cards[9], s = slot(9);
+  tone(500, 1.6, "sine", .07, 0, 1600);
+  await sky.launch([s.x + W / 2, s.y + H / 2], 1500, true);
+  last.classList.add("in", "gold"); flash(.8); ring(s.x + W / 2, s.y + H / 2, true); stage.classList.add("tell"); tone(60, 1.4, "sine", .5);
+  await wait(250); last.classList.add("open"); [1047, 1319, 1568, 2093].forEach((f, i) => tone(f, .8, "triangle", .16, i * .1));
+  await wait(700); stage.classList.remove("tell");
+  setCount(D.winners.length, true); confetti(150); cap(t().collect);
+}
+const labelCards = () => [...$("cards").children].forEach((c, i) => { const e = S.shown[i]; c.querySelector("b").textContent = nm(e); c.querySelector("span").textContent = "#" + (e.id + 1); });
+
+async function soloReveal(isFinal) {
+  const e = D.pickWinner(); D.confirm(); markWon(e); S.shown = [e];
+  $("sstars").innerHTML = `<i>${STAR}</i>`.repeat(5); labelSolo(isFinal);
+  $("sname").classList.add("sil"); cap(t().fall);
+  if (!calm) {
+    tone(110, 2.4, "sawtooth", .03, 0, 420); await sky.rampWarp(1, 1200); await wait(500);
+    tone(500, 2.2, "sine", .07, 0, 1600); setTimeout(() => sky.rampWarp(0, 900), 800);
+    await sky.launch([960, 508], 2200, true);
+    tone(60, 1.6, "sine", .55); tone(880, 1.2, "triangle", .08); flash(); ring(960, 508, true);
+  }
+  cap(); $("rays").classList.add("on"); $("solo").classList.add("on");
+  const n = $("sname"); n.style.fontSize = ""; let f = 190; while (n.scrollWidth > 1700 && f > 80) n.style.fontSize = (f -= 6) + "px";
+  await wait(450); n.classList.remove("sil"); await wait(1100);
+  const notes = [1047, 1319, 1568, 2093, 2637];
+  for (const [i, s] of [...$("sstars").children].entries()) { s.classList.add("on"); tone(notes[i], .9, "triangle", .2); await wait(190); }
+  await wait(250); $("solo").classList.add("done"); setCount(D.winners.length, true); confetti(isFinal ? 320 : 180);
+  if (isFinal) setTimeout(() => confetti(260), 1200);
+}
+function labelSolo(isFinal) {
+  const e = S.shown[0]; if (!e) return;
+  $("spill").innerHTML = STAR + (isFinal ? t().final : t().winner); $("sname").textContent = nm(e); $("sno").textContent = t().entry(e.id + 1); $("scall").textContent = t().call;
+}
+async function skyClear(type) {
+  cap();
+  if (type === "ten") { [...$("cards").children].forEach(c => c.classList.remove("in")); await wait(450); $("cards").innerHTML = ""; }
+  else { $("solo").classList.remove("on", "done"); $("rays").classList.remove("on"); await wait(400); }
+}
+
+/* Scenes, titles, end */
+function toScene(name) {
+  $("wall").classList.toggle("off", name !== "wall"); $("sky").classList.toggle("off", name !== "sky");
+  name === "sky" ? sky.start() : sky.stop();
+  return wait(700);
+}
+function kInSeg(r) { const ty = PLAN[r].type; return r - SEG[ty][0] + 1; }
+function showTitle() {
+  const R = PLAN[S.r], k = kInSeg(S.r);
+  $("title").innerHTML = `<span class="pill">${STAR}${t().eyebrow[R.type]}</span><h1>${t().head[R.type](k)}</h1><p>${t().sub[R.type]}</p>`;
+  $("title").classList.add("on");
+}
+function showEnd() {
+  $("title").innerHTML = `<span class="pill">${STAR}${t().endEyebrow}</span><h1>${t().endHead}</h1><p>${t().endSub}</p>`;
+  $("title").classList.add("on");
+}
+const hideTitle = () => $("title").classList.remove("on");
+
+async function next() {
+  if (S.busy) return;
+  if (S.phase === "end") return reset();
+  S.busy = true; ui();
+  try {
+    const R = PLAN[S.r];
+    if (S.phase === "title") {
+      hideTitle(); await wait(350);
+      if (R.type === "batch") await batchReveal(R.n);
+      else if (R.type === "ten") await tenReveal();
+      else await soloReveal(S.r === PLAN.length - 1);
+      S.phase = "hold";
+    } else if (R.type === "batch" && S.page === 0) {
+      await showPage(1);
+    } else {
+      if (R.type === "batch") await batchClear(); else await skyClear(R.type);
+      S.r++;
+      if (S.r >= PLAN.length) { S.phase = "end"; await toScene("wall"); showEnd(); confetti(260); }
+      else { if (PLAN[S.r].type !== R.type) await toScene(PLAN[S.r].type === "batch" ? "wall" : "sky"); S.phase = "title"; showTitle(); }
+    }
+  } finally { S.busy = false; ui(); }
+}
+function label() {
+  const B = T.en.btn;
+  if (S.phase === "end") return B.again;
+  if (S.phase === "title") return B[PLAN[S.r].type];
+  if (PLAN[S.r].type === "batch" && S.page === 0) return B.page;
+  return S.r === PLAN.length - 1 ? B.end : B.next;
+}
+function ui() {
+  $("go").textContent = label(); $("go").disabled = S.busy;
+  $("snd").textContent = "Sound: " + (S.sound ? "on" : "off");
+  $("langs").innerHTML = [["ar", "العربية"], ["en", "English"]].map(([k, v]) => `<button type="button" data-l="${k}" lang="${k}" aria-pressed="${k === S.lang}">${v}</button>`).join("");
+  const at = S.phase === "end" ? 4 : S.r >= 18 ? 3 : S.r >= 9 ? 2 : S.r >= 5 ? 1 : 0;
+  $("jumps").innerHTML = ["Big rounds", "Ten at a time", "Finale", "Last winner", "End"].map((v, i) => `<button type="button" data-j="${i}" aria-pressed="${i === at}">${v}</button>`).join("");
+  setRound();
+  try { history.replaceState(null, "", `#${S.lang}-${["big", "tens", "finale", "last", "end"][at]}`); } catch {}
+}
+function relabel() {
+  const r = document.documentElement; r.lang = S.lang; stage.dir = S.lang === "ar" ? "rtl" : "ltr";
+  labelTiles(); labelCards(); labelSolo(S.r === PLAN.length - 1);
+  $("count").innerHTML = t().count(shownCount);
+  if ($("title").classList.contains("on")) S.phase === "end" ? showEnd() : showTitle();
+  if ($("cap").style.opacity === "1") cap(S.phase === "hold" && PLAN[S.r].type !== "solo" ? t().collect : "");
+  ui();
+}
+// Fast-forward: draw every winner before the target round silently, then stop on its title card.
+async function jump(j) {
+  const target = [0, 5, 9, 18, PLAN.length][j];
+  D = Draw.createDraw(ENTRIES); $("cards").innerHTML = ""; $("solo").classList.remove("on", "done"); $("rays").classList.remove("on"); $("wall").classList.remove("focus"); cap();
+  buildWall();
+  for (let r = 0; r < target; r++) for (let i = 0; i < PLAN[r].n; i++) { const e = D.pickWinner(); D.confirm(); markWon(e); }
+  setCount(D.winners.length); S.r = Math.min(target, PLAN.length - 1);
+  if (target >= PLAN.length) { S.r = PLAN.length - 1; S.phase = "end"; await toScene("wall"); showEnd(); }
+  else { S.phase = "title"; await toScene(PLAN[S.r].type === "batch" ? "wall" : "sky"); showTitle(); }
+  ui();
+}
+const reset = () => jump(0);
+
+$("go").addEventListener("click", next);
+$("reset").addEventListener("click", () => { if (!S.busy) reset(); });
+$("snd").addEventListener("click", () => { S.sound = !S.sound; ui(); });
+$("langs").addEventListener("click", e => { const b = e.target.closest("button"); if (b && !S.busy) { S.lang = b.dataset.l; relabel(); } });
+$("jumps").addEventListener("click", e => { const b = e.target.closest("button"); if (b && !S.busy) jump(+b.dataset.j); });
+addEventListener("keydown", e => { if (e.code === "Space" && !e.target.closest(".ctl")) { e.preventDefault(); next(); } });
+
+// #en-tens opens a language and section; used for previews and review links.
+const m = location.hash.match(/^#(ar|en)-(big|tens|finale|last|end)$/);
+if (m) S.lang = m[1];
+fit(); document.documentElement.lang = S.lang; stage.dir = S.lang === "ar" ? "rtl" : "ltr";
+jump(m ? ["big", "tens", "finale", "last", "end"].indexOf(m[2]) : 0);
+</script>

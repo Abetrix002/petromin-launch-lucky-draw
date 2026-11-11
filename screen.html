@@ -1,0 +1,271 @@
+<title>Super Stars Lucky Draw Screen</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Arabic:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;500;700&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<style>
+/* Layout: 1920×1080 stage scaled to fit. A lit marquee board holds the draw: names roll inside it and the winner lands on it. */
+:root {
+  color-scheme: dark;
+  --ink: #170A0E; --ink-2: #210D14; --red: #CE0E2D; --gold: #E6B103; --gold-pale: #F5E6A3;
+  --white: #FFFFFF; --line-gold: #F5E6A3; --text-2: #E2D3D6; --dark-text: #252525;
+  --display: "Space Grotesk", "Noto Sans Arabic", system-ui, sans-serif;
+  --ui: Inter, "Noto Sans Arabic", system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { background: #0D0508; overflow: hidden; color: var(--white); font: 400 32px/1.4 var(--ui); padding-left: max(0px, env(safe-area-inset-left, 0px)); padding-right: max(0px, env(safe-area-inset-right, 0px)); }
+#stage { position: absolute; width: 1920px; height: 1080px; transform-origin: 0 0; overflow: hidden;
+  background: radial-gradient(1200px 760px at 50% 48%, rgba(206,14,45,.42), transparent 72%), linear-gradient(90deg, var(--ink), var(--ink-2) 52%, var(--ink)); }
+:lang(ar) h1, :lang(ar) .pill, :lang(ar) .giant { letter-spacing: 0; }
+
+.pill { display: inline-flex; align-items: center; gap: 12px; padding: 12px 26px; border-radius: 999px; font: 700 28px var(--ui); letter-spacing: .05em; text-transform: uppercase; color: var(--ink); background: linear-gradient(90deg, var(--gold-pale), var(--gold)); }
+.pill svg { width: 28px; height: 28px; fill: currentColor; }
+h1 { margin: 0; font: 300 104px/1.12 var(--display); letter-spacing: .5px; text-wrap: balance; }
+h1 b { font-weight: 700; }
+.sub { margin: 0; font-size: 38px; color: var(--text-2); }
+.btn { min-height: 96px; padding: 0 56px; border: 0; border-radius: 999px; background: linear-gradient(90deg, var(--gold-pale), var(--gold)); color: var(--ink); font: 700 38px var(--ui); cursor: pointer; }
+.btn.sec { background: rgba(255,255,255,.12); color: var(--white); box-shadow: inset 0 0 0 2px rgba(255,255,255,.4); }
+.btn:focus-visible { outline: 5px solid var(--white); outline-offset: 4px; }
+.logo { height: 130px; display: block; }
+
+/* Draw layout */
+.bar { position: absolute; top: 48px; inset-inline: 140px; display: flex; align-items: center; justify-content: space-between; }
+.tally { font: 500 40px var(--ui); color: var(--text-2); }
+.tally b { font: 700 72px var(--display); color: var(--gold-pale); font-variant-numeric: tabular-nums; margin-inline-end: 14px; }
+.board { position: absolute; left: 140px; top: 200px; width: 1640px; height: 600px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; padding: 56px 90px; text-align: center; border-radius: 64px; background: radial-gradient(900px 420px at 50% 50%, rgba(206,14,45,.3), transparent 75%), var(--ink); }
+.frame { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.b { fill: none; stroke: #FFF3C4; stroke-width: 14; stroke-linecap: round; stroke-dasharray: 0 2; }
+.b2 { stroke-dashoffset: 1; }
+.live .b { animation: blink .5s steps(2) infinite; }
+.live .b2 { animation-delay: .25s; }
+@keyframes blink { 50% { stroke: #7A4A00; } }
+.giant { font: 700 180px/1 var(--display); color: var(--gold-pale); font-variant-numeric: tabular-nums; }
+.winner-name { font: 700 176px/1.1 var(--display); white-space: nowrap; }
+.tail { font: 500 76px/1 var(--ui); color: var(--gold-pale); font-variant-numeric: tabular-nums; }
+.call { font: 600 58px var(--ui); margin: 6px 0 0; }
+.reel { position: relative; width: 100%; height: 510px; overflow: hidden; -webkit-mask: linear-gradient(transparent, #000 32%, #000 68%, transparent); mask: linear-gradient(transparent, #000 32%, #000 68%, transparent); }
+.reel-line { position: absolute; inset-inline: 0; top: 170px; height: 170px; border-block: 3px solid var(--gold); }
+.rail > div { height: 170px; display: flex; align-items: center; justify-content: center; gap: 36px; font: 700 124px/1 var(--display); white-space: nowrap; }
+.rail bdi { font: 500 64px var(--ui); color: var(--gold-pale); }
+.below { position: absolute; top: 826px; inset-inline: 140px; display: grid; justify-items: center; gap: 20px; }
+.row { display: flex; gap: 24px; }
+.won { display: flex; align-items: center; gap: 14px; max-width: 100%; overflow: hidden; }
+.won h2 { margin: 0 8px 0 0; font: 600 28px var(--ui); color: var(--text-2); white-space: nowrap; }
+[dir=rtl] .won h2 { margin: 0 0 0 8px; }
+.chip { padding: 10px 24px; border-radius: 999px; background: rgba(255,255,255,.12); font: 600 30px var(--ui); white-space: nowrap; }
+
+/* Join and final layouts */
+.full { position: absolute; inset: 0; padding: 60px 80px; display: flex; flex-direction: column; }
+.j-top { flex: 1; display: grid; grid-template-columns: 1fr 700px; grid-template-rows: minmax(0, 1fr); gap: 70px; min-height: 0; }
+.j-l { display: flex; flex-direction: column; gap: 26px; min-width: 0; }
+.j-h { display: flex; align-items: center; gap: 32px; }
+.j-l h1 { font-size: 118px; margin-top: 20px; }
+.j-l .sub { font-size: 40px; }
+.count { display: flex; align-items: flex-end; gap: 28px; margin-top: auto; }
+.count .giant { font-size: 170px; }
+.count p { margin: 0; font-size: 38px; }
+.count .meta { display: grid; gap: 4px; padding-bottom: 18px; min-width: 0; }
+.count p.latest { color: var(--gold-pale); font: 500 30px var(--ui); white-space: nowrap; }
+.count .end { margin-inline-start: auto; margin-bottom: 18px; }
+.count .btn { min-height: 72px; padding: 0 36px; font-size: 28px; white-space: nowrap; }
+.qr { background: #fff; color: var(--ink); border-radius: 36px; padding: 30px; display: grid; justify-items: center; align-content: center; gap: 24px; border: 6px solid var(--line-gold); }
+.qr svg { width: 620px; height: 620px; display: block; }
+.qr b { font: 700 64px var(--display); }
+.final { align-items: center; text-align: center; gap: 40px; justify-content: center; }
+.wgrid { display: flex; flex-wrap: wrap; justify-content: center; gap: 22px; max-width: 1700px; }
+.wcard { width: 400px; background: #fff; color: var(--dark-text); border-radius: 24px; padding: 24px 28px; text-align: center; }
+.wcard b { display: block; font: 700 46px/1.15 var(--display); }
+.wcard bdi { font: 500 32px var(--ui); color: #6B585A; font-variant-numeric: tabular-nums; }
+.foot { margin: 0; font-size: 36px; color: var(--text-2); }
+
+#lost { position: absolute; inset: 0; z-index: 5; display: grid; place-items: center; background: rgba(13,5,8,.95); }
+#lost div { display: grid; gap: 28px; justify-items: center; text-align: center; max-width: 1200px; }
+canvas { position: absolute; inset: 0; pointer-events: none; z-index: 4; }
+
+.rv { position: fixed; z-index: 20; right: max(12px, env(safe-area-inset-right, 0px)); bottom: calc(12px + env(safe-area-inset-bottom, 0px)); direction: ltr; font: 500 13px Inter, system-ui, sans-serif; background: #fff; color: #252525; border-radius: 14px; box-shadow: 0 6px 24px rgba(0,0,0,.45); }
+.rv summary { padding: 10px 14px; cursor: pointer; font-weight: 600; }
+.rv div { display: grid; padding: 0 8px 8px; width: 220px; max-height: 70vh; overflow: auto; }
+.rv button { text-align: left; min-height: 30px; padding: 0 8px; border: 0; border-radius: 8px; background: none; font: inherit; color: inherit; cursor: pointer; }
+.rv button[aria-current=true] { background: #FCE8EB; color: #A50A23; font-weight: 700; }
+.rv small { padding: 6px 8px 0; color: #6B585A; }
+.rv a { padding: 6px 8px; color: #A50A23; font-weight: 700; }
+</style>
+
+<div id="stage"><div id="view"></div><canvas id="fx" width="1920" height="1080"></canvas></div>
+<details class="rv"><summary>States</summary><div id="rv"></div></details>
+
+<script src="draw.js"></script>
+<script>
+const LANDING_URL = "https://claude.ai/artifact/1DuJDDACcKnpwF7HxXsRmg";
+const STAR = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>`;
+const F = [["أحمد","Ahmed"],["محمد","Mohammed"],["خالد","Khalid"],["عبد الله","Abdullah"],["سعيد","Saeed"],["ياسر","Yasser"],["فهد","Fahad"],["ماجد","Majed"],["عمر","Omar"],["يوسف","Yousef"],["إبراهيم","Ibrahim"],["علي","Ali"],["حسن","Hassan"],["طارق","Tariq"],["ناصر","Nasser"],["سلطان","Sultan"],["وليد","Waleed"],["مصطفى","Mostafa"],["سامي","Sami"],["رامي","Rami"]];
+const L = [["الغامدي","Al Ghamdi"],["القحطاني","Al Qahtani"],["الحربي","Al Harbi"],["الزهراني","Al Zahrani"],["الشهري","Al Shehri"],["العتيبي","Al Otaibi"],["المالكي","Al Malki"],["منصور","Mansour"],["السيد","El Sayed"],["حسين","Hussein"],["صالح","Saleh"],["المطيري","Al Mutairi"],["الدوسري","Al Dosari"],["اليامي","Al Yami"],["عثمان","Othman"]];
+const ENTRIES = Array.from({ length: 248 }, (_, i) => { const f = F[i % F.length], l = L[(i * 7 + (i >> 2)) % L.length]; return { id: i, ar: f[0] + " " + l[0], en: f[1] + " " + l[1], phone: "5" + String((i * 48271 + 10000019) % 100000000).padStart(8, "0") }; });
+
+const T = {
+  en: { eb: "Launch event lucky draw", joinH: "Scan to join<br><b>the live draw.</b>", joinSub: "It's free and takes under a minute. Names are drawn live on this screen.", scan: "Scan to enter", countL: "entries so far", latest: n => "Just joined: " + n, empty: "Be the first to enter.", closeBtn: "Close entries",
+    closedE: "Entries closed", closedL: "people are in the draw", closedS: "Every name is picked at random.", startBtn: "Start the draw",
+    inDraw: "in the draw", drawNo: i => `Draw ${i}`, readyH: "Ready to draw <b>the first name.</b>", nextH: "Ready for <b>the next name.</b>", drawBtn: "Draw a name", endBtn: "End the draw",
+    winE: "Winner", stage: "Please come to the stage", okBtn: "Winner confirmed", skipBtn: "Not in the hall, redraw",
+    redrawH: "No answer.<br><b>We draw again.</b>", redrawS: "The last name called is out of the draw.", againBtn: "Draw again", rail: "Winners so far",
+    doneE: "Draw complete", doneH: "Congratulations to <b>all our winners.</b>", doneF: "Not a Super Star yet? Find out more at superstars.petrolubegroup.com",
+    noneE: "Draw paused", noneH: "No names <b>left to draw.</b>", noneS: "Everyone in the draw has been called.", reopenBtn: "Reopen entries",
+    lostH: "Connection <b>lost.</b>", lostS: "The draw is paused. All entries and winners are saved.", lostBtn: "Reconnect" },
+  ar: { eb: "سحب حفل الإطلاق", joinH: "امسح الرمز<br><b>وادخل السحب.</b>", joinSub: "مجاني ويستغرق أقل من دقيقة. تُسحب الأسماء مباشرة على هذه الشاشة.", scan: "امسح للتسجيل", countL: "مشارك حتى الآن", latest: n => "انضم الآن: " + n, empty: "كن أول المشاركين.", closeBtn: "أغلق التسجيل",
+    closedE: "انتهى التسجيل", closedL: "مشارك في السحب", closedS: "يتم اختيار كل اسم عشوائيًا.", startBtn: "ابدأ السحب",
+    inDraw: "في السحب", drawNo: i => `السحب ${i}`, readyH: "جاهزون لسحب <b>الاسم الأول.</b>", nextH: "جاهزون لسحب <b>الاسم التالي.</b>", drawBtn: "اسحب اسمًا", endBtn: "إنهاء السحب",
+    winE: "الفائز", stage: "تفضل إلى المسرح", okBtn: "تم تأكيد الفائز", skipBtn: "غير موجود، اسحب من جديد",
+    redrawH: "لا يوجد رد.<br><b>نسحب من جديد.</b>", redrawS: "الاسم السابق خرج من السحب.", againBtn: "اسحب من جديد", rail: "الفائزون حتى الآن",
+    doneE: "انتهى السحب", doneH: "مبروك <b>لكل الفائزين.</b>", doneF: "لم تنضم إلى سوبر ستارز بعد؟ اعرف المزيد على superstars.petrolubegroup.com",
+    noneE: "السحب متوقف", noneH: "لا توجد <b>أسماء متبقية.</b>", noneS: "تم النداء على كل المشاركين في السحب.", reopenBtn: "أعد فتح التسجيل",
+    lostH: "انقطع <b>الاتصال.</b>", lostS: "السحب متوقف مؤقتًا. كل المشاركات والفائزين محفوظون.", lostBtn: "أعد الاتصال" },
+};
+const STATES = [["join","Join"],["join-empty","Join, no entries"],["closed","Entries closed"],["ready","Ready to draw"],["drawing","Drawing a name"],["winner","Winner"],["redraw","Not present, redraw"],["next","Next draw"],["complete","Draw complete"],["none-left","No names left"],["lost","Connection lost"]];
+
+const $ = id => document.getElementById(id), view = $("view");
+const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const ROW = 170;
+let lang = "ar", state = "join", D, joined = 236, lost = false, busy = false, timer, anim;
+const t = () => T[lang], rtl = () => lang === "ar";
+const who = e => Draw.publicName(e[lang]), tail = e => "••••" + Draw.lastFour(e.phone);
+const fmt = n => n.toLocaleString("en"), pick = a => a[Math.floor(Math.random() * a.length)];
+const createNew = list => (D = Draw.createDraw(list));
+
+function fit() { const s = $("stage"), k = Math.min(innerWidth / 1920, innerHeight / 1080); s.style.transform = `scale(${k})`; s.style.left = (innerWidth - 1920 * k) / 2 + "px"; s.style.top = (innerHeight - 1080 * k) / 2 + "px"; }
+addEventListener("resize", fit); fit();
+
+const logo = `<img class="logo" src="assets/logo.png" alt="Super Stars">`;
+const pill = (x, star = true) => `<span class="pill">${star ? STAR : ""}${x}</span>`;
+const btn = (x, act, sec) => `<button class="btn${sec ? " sec" : ""}" data-act="${act}" type="button">${x}</button>`;
+const frame = `<svg class="frame" viewBox="0 0 1640 600" aria-hidden="true"><defs><linearGradient id="g" x1="0" x2="1"><stop stop-color="#F5E6A3"/><stop offset="1" stop-color="#E6B103"/></linearGradient></defs>
+  <rect x="18" y="18" width="1604" height="564" rx="60" fill="none" stroke="url(#g)" stroke-width="36"/>
+  <rect class="b" x="18" y="18" width="1604" height="564" rx="60" pathLength="100"/><rect class="b b2" x="18" y="18" width="1604" height="564" rx="60" pathLength="100"/></svg>`;
+const drawNo = () => D.winners.length + 1;
+
+function board() {
+  const T = t();
+  switch (state) {
+    case "closed": return `${pill(T.closedE)}<div class="giant">${fmt(D.pool().length)}</div><h1 style="font-size:64px">${T.closedL}</h1><p class="sub">${T.closedS}</p>`;
+    case "ready": case "next": return `${pill(T.drawNo(drawNo()))}<h1>${D.winners.length ? T.nextH : T.readyH}</h1>`;
+    case "drawing": return `<div class="reel"><div class="reel-line"></div><div class="rail" id="rail"></div></div>`;
+    case "winner": return `${pill(T.winE)}<div class="winner-name" id="wn">${who(D.entry)}</div><bdi class="tail" dir="ltr">${tail(D.entry)}</bdi><p class="call">${T.stage}</p>`;
+    case "redraw": return `${pill(T.drawNo(drawNo()))}<h1>${T.redrawH}</h1><p class="sub">${T.redrawS}</p>`;
+    case "none-left": return `${pill(T.noneE, false)}<h1>${T.noneH}</h1><p class="sub">${T.noneS}</p>`;
+  }
+}
+function actions() {
+  const T = t(), end = D.winners.length ? btn(T.endBtn, "end", 1) : "";
+  switch (state) {
+    case "closed": return btn(T.startBtn, "ready");
+    case "ready": case "next": return btn(T.drawBtn, "draw") + end;
+    case "winner": return btn(T.okBtn, "confirm") + btn(T.skipBtn, "skip", 1);
+    case "redraw": return btn(T.againBtn, "draw");
+    case "none-left": return btn(T.reopenBtn, "join") + end;
+  }
+  return "";
+}
+function rail() {
+  const w = D.winners.slice(-5);
+  return w.length ? `<div class="won"><h2>${t().rail}</h2>${w.map(e => `<span class="chip">${who(e)}</span>`).join("")}</div>` : "";
+}
+function joinView() {
+  const T = t(), qr = window.qrcode ? qrcode(0, "M") : null;
+  if (qr) { qr.addData(LANDING_URL); qr.make(); }
+  const latest = joined ? who(ENTRIES[joined - 1]) : "";
+  return `<div class="full"><div class="j-top"><div class="j-l"><div class="j-h">${logo}${pill(T.eb)}</div><h1>${T.joinH}</h1><p class="sub">${T.joinSub}</p>
+      <div class="count"><div class="giant" id="cnt">${fmt(joined)}</div><div class="meta"><p>${T.countL}</p><p class="latest" id="lat">${joined ? T.latest(latest) : T.empty}</p></div><span class="end">${btn(T.closeBtn, "closed", 1)}</span></div></div>
+    <div class="qr">${qr ? qr.createSvgTag({ cellSize: 8, margin: 0, scalable: true }) : ""}<b>${T.scan}</b></div></div></div>`;
+}
+function finalView() {
+  const T = t();
+  return `<div class="full final">${logo}${pill(T.doneE)}<h1>${T.doneH}</h1><div class="wgrid">${D.winners.map(e => `<div class="wcard"><b>${who(e)}</b><bdi dir="ltr">${tail(e)}</bdi></div>`).join("")}</div><p class="foot">${T.doneF}</p></div>`;
+}
+
+function render() {
+  const root = document.documentElement; root.lang = lang; root.dir = rtl() ? "rtl" : "ltr";
+  clearInterval(timer);
+  if (state === "join" || state === "join-empty") {
+    view.innerHTML = joinView();
+    if (state === "join" && !lost) timer = setInterval(tickJoin, 2600);
+  } else if (state === "complete") view.innerHTML = finalView();
+  else view.innerHTML = `<div class="bar">${logo}<div class="tally"><b>${fmt(D.pool().length)}</b>${t().inDraw}</div></div>
+    <section class="board${state === "drawing" ? " live" : ""}" aria-live="polite">${board()}${frame}</section>
+    <div class="below"><div class="row">${actions()}</div>${rail()}</div>`;
+  if (lost) view.insertAdjacentHTML("beforeend", `<div id="lost"><div><h1>${t().lostH}</h1><p class="sub">${t().lostS}</p>${btn(t().lostBtn, "reconnect")}</div></div>`);
+  const wn = $("wn"); if (wn) { let f = 176; while (wn.scrollWidth > wn.parentElement.clientWidth - 180 && f > 70) wn.style.fontSize = (f -= 6) + "px"; }
+  document.querySelectorAll("#rv button").forEach(b => b.setAttribute("aria-current", b.dataset.s ? (b.dataset.s === "lost" ? lost : !lost && b.dataset.s === state) : b.dataset.l === lang));
+  try { history.replaceState(null, "", "#" + lang + "-" + (lost ? "lost" : state)); } catch {}
+}
+function tickJoin() {
+  if (joined >= ENTRIES.length) return clearInterval(timer);
+  joined++; $("cnt").textContent = fmt(joined); $("lat").textContent = t().latest(who(ENTRIES[joined - 1]));
+}
+
+function runDraw() {
+  const e = D.pickWinner();
+  if (!e) { state = "none-left"; return render(); }
+  state = "drawing"; busy = true; render();
+  const pool = D.pool(), seq = Array.from({ length: 44 }, () => pick(pool)).concat(e, pick(pool));
+  $("rail").innerHTML = seq.map(x => `<div>${who(x)} <bdi dir="ltr">${tail(x)}</bdi></div>`).join("");
+  const end = -(seq.length - 3) * ROW;
+  const finish = () => { busy = false; state = "winner"; render(); confetti(); };
+  if (calm) return finish();
+  anim = $("rail").animate([{ transform: "translateY(0)" }, { transform: `translateY(${end}px)` }], { duration: 6000, easing: "cubic-bezier(.12,.72,.14,1)", fill: "forwards" });
+  anim.onfinish = finish;
+}
+const act = {
+  closed() { createNew(ENTRIES.slice(0, joined)); state = "closed"; render(); },
+  ready() { state = "ready"; render(); },
+  draw: runDraw,
+  confirm() { D.confirm(); state = D.pool().length ? "next" : "none-left"; render(); },
+  skip() { D.skip(); state = D.pool().length ? "redraw" : "none-left"; render(); },
+  end() { state = "complete"; render(); confetti(); },
+  join() { joined = ENTRIES.length; state = "join"; render(); },
+  reconnect() { lost = false; render(); },
+};
+view.addEventListener("click", e => { const b = e.target.closest("[data-act]"); if (b && !busy) act[b.dataset.act](); });
+addEventListener("keydown", e => {
+  if (e.code !== "Space" && e.key !== "Enter" || busy || e.target.closest?.(".rv")) return;
+  e.preventDefault();
+  if (lost) return act.reconnect();
+  if (state === "join" || state === "join-empty") return act.closed();
+  view.querySelector("[data-act]")?.click();
+});
+
+function confetti() {
+  if (calm) return;
+  const c = $("fx"), x = c.getContext("2d"), cols = ["#F5E6A3", "#E6B103", "#CE0E2D", "#FF8300", "#FFFFFF"];
+  const ps = Array.from({ length: 170 }, () => ({ x: Math.random() * 1920, y: -40 - Math.random() * 500, v: 7 + Math.random() * 9, s: 9 + Math.random() * 13, r: Math.random() * 6, w: (Math.random() - .5) * .25, c: pick(cols) }));
+  const t0 = performance.now();
+  (function f(now) {
+    x.clearRect(0, 0, 1920, 1080);
+    ps.forEach(p => { p.y += p.v; p.r += p.w; x.save(); x.translate(p.x, p.y); x.rotate(p.r); x.fillStyle = p.c; x.beginPath(); for (let i = 0; i < 10; i++) { const a = i * Math.PI / 5, q = i % 2 ? p.s * .45 : p.s; x.lineTo(Math.sin(a) * q, -Math.cos(a) * q); } x.fill(); x.restore(); });
+    if (now - t0 < 3600) requestAnimationFrame(f); else x.clearRect(0, 0, 1920, 1080);
+  })(t0);
+}
+
+// Reviewer jump: builds the draw into the right shape for each state.
+function go(s) {
+  anim?.cancel(); busy = false; lost = false; $("fx").getContext("2d").clearRect(0, 0, 1920, 1080);
+  joined = ENTRIES.length; createNew(ENTRIES);
+  const confirm = k => { for (let i = 0; i < k; i++) { D.pickWinner(); D.confirm(); } };
+  if (s === "lost") { lost = true; state = "ready"; return render(); }
+  state = s;
+  if (s === "join") joined = 236;
+  if (s === "join-empty") joined = 0;
+  if (s === "drawing") return runDraw();
+  if (s === "winner") D.pickWinner();
+  if (s === "redraw") { D.pickWinner(); D.skip(); }
+  if (s === "next") confirm(2);
+  if (s === "complete") confirm(8);
+  if (s === "none-left") { createNew(ENTRIES.slice(0, 1)); confirm(1); }
+  render();
+  if (s === "winner") confetti();
+}
+$("rv").innerHTML = [["ar","Arabic"],["en","English"]].map(l => `<button type="button" data-l="${l[0]}">${l[1]}</button>`).join("") + STATES.map(s => `<button type="button" data-s="${s[0]}">${s[1]}</button>`).join("") + `<a href="${LANDING_URL}" target="_blank" rel="noopener">Open landing page</a><small>Sample names. Space runs the next step.</small>`;
+$("rv").addEventListener("click", e => { const b = e.target.closest("button"); if (!b || busy && b.dataset.l) return; if (b.dataset.l) { lang = b.dataset.l; render(); } else go(b.dataset.s); });
+const m = location.hash.match(/^#(ar|en)-([a-z-]+)$/);
+if (m) lang = m[1];
+go(m && STATES.some(s => s[0] === m[2]) ? m[2] : "join");
+</script>

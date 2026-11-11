@@ -1,4 +1,4 @@
-// Pure draw logic shared by landing.html and wheel.html. check.mjs covers it.
+// Pure draw logic shared by landing.html and screen.html. check.mjs covers it.
 (function (root) {
   const INDIC = "٠١٢٣٤٥٦٧٨٩", PERSIAN = "۰۱۲۳۴۵۶۷۸۹";
   const COMPOUND = /^(عبد|abd|abdul|abdel)$/i;
@@ -33,17 +33,13 @@
 
   const lastFour = phone => String(phone).slice(-4);
 
-  function createDraw(entries, prizes, rand = randInt) {
-    const stock = prizes.map(p => ({ ...p, left: p.qty }));
+  function createDraw(entries, rand = randInt) {
     const out = new Set(), winners = [];
     const d = {
-      prize: null, entry: null, winners,
-      slices: () => stock.filter(p => p.left > 0),
+      entry: null, winners,
       pool: () => entries.filter(e => !out.has(e.id)),
-      total: stock.reduce((n, p) => n + p.qty, 0),
-      spin() { const s = d.slices(); return (d.prize = s[rand(s.length)]); },
       pickWinner() { const p = d.pool(); return (d.entry = p.length ? p[rand(p.length)] : null); },
-      award() { winners.push({ entry: d.entry, prize: d.prize }); out.add(d.entry.id); d.prize.left--; d.prize = d.entry = null; },
+      confirm() { winners.push(d.entry); out.add(d.entry.id); d.entry = null; },
       skip() { out.add(d.entry.id); d.entry = null; },
     };
     return d;

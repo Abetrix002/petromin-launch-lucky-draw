@@ -1,0 +1,423 @@
+<title>Super Stars 10-Winner Draw</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Arabic:wght@400;500;600;700&family=Space+Grotesk:wght@300;500;700&display=swap">
+<style>
+/* Layout: host bar on top, 1920×1080 stage below. Three directions, each showing every guest and narrowing to one name, ten times. */
+:root {
+  color-scheme: dark;
+  --ink: #170A0E; --ink-2: #210D14; --red: #CE0E2D; --gold: #E6B103; --gold-pale: #F5E6A3; --text-2: #E2D3D6;
+  --display: "Space Grotesk", "Noto Sans Arabic", system-ui, sans-serif;
+  --ui: Inter, "Noto Sans Arabic", system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: #0D0508; color: #fff; overflow: hidden; font: 400 15px/1.4 Inter, system-ui, sans-serif; }
+.ctl { position: fixed; z-index: 10; top: 0; left: 0; right: 0; min-height: 64px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; direction: ltr;
+  padding: 10px max(16px, env(safe-area-inset-right, 0px)) 10px max(16px, env(safe-area-inset-left, 0px)); background: #FBF7F4; color: #1E1316; border-bottom: 1px solid #EADBD3; }
+.seg { display: inline-flex; background: #F1E9E5; border-radius: 12px; padding: 3px; }
+.seg button { min-height: 38px; padding: 0 14px; border: 0; border-radius: 9px; background: none; color: #1E1316; font: 600 14px Inter, sans-serif; cursor: pointer; white-space: nowrap; }
+.seg button[aria-pressed=true] { background: #1E1316; color: #FBF7F4; }
+.go { min-height: 44px; padding: 0 22px; border: 0; border-radius: 999px; background: linear-gradient(90deg, #F5E6A3, #E6B103); color: #170A0E; font: 700 15px Inter, sans-serif; cursor: pointer; }
+.go:disabled { opacity: .45; cursor: progress; }
+.ghost { min-height: 40px; padding: 0 14px; border: 1px solid #D9C6BD; border-radius: 999px; background: #fff; color: #1E1316; font: 600 14px Inter, sans-serif; cursor: pointer; }
+.hint { flex: 1 1 240px; min-width: 0; font-size: 13px; color: #6B585A; }
+.ctl button:focus-visible { outline: 3px solid #A50A23; outline-offset: 2px; }
+
+#stage { position: absolute; width: 1920px; height: 1080px; transform-origin: 0 0; overflow: hidden; font: 400 32px/1.3 var(--ui);
+  background: radial-gradient(1200px 780px at 50% 50%, rgba(206,14,45,.4), transparent 72%), linear-gradient(90deg, var(--ink), var(--ink-2) 52%, var(--ink)); }
+#stage::after { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity .9s; z-index: 4;
+  background: radial-gradient(900px 620px at 50% 52%, rgba(245,200,60,.5), rgba(230,177,3,.12) 55%, transparent 75%); }
+#stage.tell::after { opacity: 1; }
+:lang(ar) #stage .pill, :lang(ar) #stage h1 { letter-spacing: 0; }
+.bar { position: absolute; z-index: 6; top: 36px; inset-inline: 70px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; pointer-events: none; }
+.bar img { height: 100px; }
+.prog { font: 700 34px var(--display); color: var(--gold-pale); text-align: center; }
+.tally { font: 500 32px var(--ui); color: var(--text-2); text-align: end; }
+.tally b { font: 700 58px var(--display); color: var(--gold-pale); margin-inline-end: 12px; font-variant-numeric: tabular-nums; }
+#scene { position: absolute; inset: 0; }
+canvas { position: absolute; inset: 0; pointer-events: none; }
+#fx { z-index: 9; }
+.cap { position: absolute; z-index: 3; bottom: 56px; left: 0; right: 0; text-align: center; font: 500 40px var(--ui); color: var(--text-2); transition: opacity .4s; text-shadow: 0 0 18px #170A0E; }
+.pill { display: inline-flex; align-items: center; gap: 12px; padding: 12px 26px; border-radius: 999px; font: 700 28px var(--ui); letter-spacing: .05em; text-transform: uppercase; color: var(--ink); background: linear-gradient(90deg, var(--gold-pale), var(--gold)); }
+.pill svg { width: 28px; height: 28px; fill: currentColor; }
+
+/* Winner card */
+#win { position: absolute; z-index: 5; left: 50%; top: 52%; width: 1500px; padding: 60px 80px; transform: translate(-50%, -50%) scale(.6); opacity: 0; pointer-events: none; text-align: center;
+  border-radius: 56px; background: radial-gradient(800px 300px at 50% 0%, rgba(245,230,163,.18), transparent 70%), #1C0C11; box-shadow: 0 0 0 6px var(--gold), 0 0 120px rgba(230,177,3,.45); transition: transform .7s cubic-bezier(.2,1.4,.3,1), opacity .4s; }
+#win.on { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+.wname { font: 700 170px/1.1 var(--display); white-space: nowrap; margin-top: 18px; }
+.wtail { font: 500 58px/1 var(--ui); color: var(--gold-pale); font-variant-numeric: tabular-nums; }
+.wcall { font: 600 54px var(--ui); margin-top: 22px; }
+.fly { position: absolute; z-index: 4; display: grid; place-items: center; border-radius: 999px; background: linear-gradient(90deg, var(--gold-pale), var(--gold)); color: var(--ink); font-weight: 700; font-family: var(--ui); white-space: nowrap; box-shadow: 0 0 80px rgba(245,200,60,.9); }
+
+/* Constellation */
+.cst { position: absolute; inset: 0; perspective: 1900px; perspective-origin: 50% 54%; }
+.sph { position: absolute; left: 50%; top: 54%; width: 0; height: 0; transform-style: preserve-3d; transition: opacity .8s; }
+.sph.gone { opacity: 0; }
+.chip { position: absolute; left: 0; top: 0; padding: 6px 14px; border-radius: 999px; white-space: nowrap; font: 600 19px var(--ui); color: var(--gold-pale);
+  background: rgba(40,14,22,.8); box-shadow: inset 0 0 0 1.5px rgba(245,230,163,.32); backface-visibility: hidden; translate: -50% -50%; transition: background .25s, color .25s, box-shadow .25s; }
+.chip.lit { background: rgba(245,230,163,.9); color: var(--ink); }
+.chip.won { background: #B8860B; color: var(--ink); box-shadow: none; }
+.chip.hit { background: linear-gradient(90deg, var(--gold-pale), var(--gold)); color: var(--ink); box-shadow: 0 0 60px rgba(245,200,60,.95); }
+
+/* Spotlight */
+.arena { position: absolute; inset: 0; perspective: 1300px; perspective-origin: 50% 18%; overflow: hidden; }
+.seats { position: absolute; left: 50%; top: 58%; transform: translate(-50%, -50%) rotateX(54deg); }
+.seat { position: absolute; padding: 2px 4px; border-radius: 10px; display: grid; place-items: center; overflow: hidden; text-align: center;
+  background: #3A1520; color: #F1E4DA; font: 600 18px/1.1 var(--ui); transition: background .4s, color .4s, box-shadow .4s; }
+.seat.won { background: #8C6A10; color: var(--ink); }
+.seat.hit { background: linear-gradient(90deg, var(--gold-pale), var(--gold)); color: var(--ink); box-shadow: 0 0 40px rgba(245,200,60,.95); }
+
+/* From all of you to one */
+.tile { position: absolute; perspective: 1400px; transition: left .9s cubic-bezier(.2,.8,.2,1), top .9s cubic-bezier(.2,.8,.2,1), width .9s cubic-bezier(.2,.8,.2,1), height .9s cubic-bezier(.2,.8,.2,1), opacity .6s, transform .6s; }
+.tile .in { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform .8s cubic-bezier(.3,.1,.2,1); }
+.tile.down .in { transform: rotateY(180deg); }
+.face { position: absolute; inset: 0; display: grid; place-items: center; align-content: center; border-radius: 10px; backface-visibility: hidden; padding: 0 8px; text-align: center; }
+.front { background: rgba(48,16,26,.85); box-shadow: inset 0 0 0 1px rgba(245,230,163,.18); color: #EADFD6; font-weight: 600; font-family: var(--ui); line-height: 1.15; white-space: nowrap; overflow: hidden; transition: font-size .9s, background .3s, color .3s; }
+.back { transform: rotateY(180deg); background: radial-gradient(circle at 50% 40%, #3A1620, #170A0E); box-shadow: inset 0 0 0 2px rgba(230,177,3,.75); }
+.back img { height: 78%; width: auto; max-width: 90%; object-fit: contain; }
+.tile.lit .back { background: radial-gradient(circle at 50% 40%, #6A3410, #2A0E16); box-shadow: inset 0 0 0 3px var(--gold-pale), 0 0 26px rgba(245,200,60,.95); }
+.tile.lit { z-index: 2; transform: scale(1.5); transition: transform .08s; }
+.tile.win { z-index: 3; }
+.tile.win .back { box-shadow: inset 0 0 0 6px var(--gold), 0 0 120px rgba(230,177,3,.5); }
+.tile.won .front { background: #8C6A10; color: var(--ink); }
+.tile.dim { opacity: .18; }
+.tile.win .front { border-radius: 56px; background: radial-gradient(800px 300px at 50% 0%, rgba(245,230,163,.18), transparent 70%), #1C0C11; box-shadow: 0 0 0 6px var(--gold), 0 0 120px rgba(230,177,3,.45); white-space: normal; }
+.tile.win .back { border-radius: 56px; }
+.front small { display: block; font: 500 .55em var(--ui); color: var(--gold-pale); margin-top: .25em; font-variant-numeric: tabular-nums; }
+.front .call { display: block; font: 600 54px var(--ui); color: #fff; margin-top: 26px; }
+
+/* End screen */
+#end { position: absolute; inset: 0; z-index: 7; display: grid; place-items: center; align-content: center; gap: 34px; text-align: center; opacity: 0; pointer-events: none; transition: opacity .6s;
+  background: radial-gradient(1100px 700px at 50% 50%, #241016, #170A0E); }
+#end.on { opacity: 1; }
+#end h1 { margin: 0; font: 700 96px/1.05 var(--display); }
+#end h1 span { font-weight: 300; }
+#end p { margin: 0; font-size: 38px; color: var(--text-2); }
+.wgrid { display: grid; grid-template-columns: repeat(5, 320px); gap: 18px; }
+.wcard { background: #fff; color: #252525; border-radius: 22px; padding: 18px 16px; display: grid; gap: 4px; }
+.wcard b { font: 700 38px/1.15 var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wcard span { font: 500 24px var(--ui); color: #6B585A; }
+@media (prefers-reduced-motion: reduce) { .tile, .tile .in, .sph, #win, #end { transition: none !important; } }
+</style>
+
+<div class="ctl">
+  <div class="seg" role="group" aria-label="Direction" id="dirs"></div>
+  <div class="seg" role="group" aria-label="Language" id="langs"></div>
+  <button class="go" id="go" type="button"></button>
+  <button class="ghost" id="reset" type="button">Reset</button>
+  <button class="ghost" id="snd" type="button"></button>
+  <span class="hint" id="hint"></span>
+</div>
+<div id="stage">
+  <div class="bar"><img src="assets/logo.png" alt="Super Stars"><div class="prog" id="prog"></div><div class="tally" id="tally"></div></div>
+  <div id="scene"></div>
+  <div id="win" aria-live="polite"></div>
+  <div id="end"></div>
+  <canvas id="fx" width="1920" height="1080"></canvas>
+</div>
+
+<script src="draw.js"></script>
+<script>
+// Set these two for the event.
+const GUESTS = 340, WINNERS = 10;
+
+const STAR = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>`;
+const F = [["أحمد","Ahmed"],["محمد","Mohammed"],["خالد","Khalid"],["عبد الله","Abdullah"],["سعيد","Saeed"],["ياسر","Yasser"],["فهد","Fahad"],["ماجد","Majed"],["عمر","Omar"],["يوسف","Yousef"],["إبراهيم","Ibrahim"],["علي","Ali"],["حسن","Hassan"],["طارق","Tariq"],["ناصر","Nasser"],["سلطان","Sultan"],["وليد","Waleed"],["مصطفى","Mostafa"],["سامي","Sami"],["رامي","Rami"]];
+const L = [["الغامدي","Al Ghamdi"],["القحطاني","Al Qahtani"],["الحربي","Al Harbi"],["الزهراني","Al Zahrani"],["الشهري","Al Shehri"],["العتيبي","Al Otaibi"],["المالكي","Al Malki"],["منصور","Mansour"],["السيد","El Sayed"],["حسين","Hussein"],["صالح","Saleh"],["المطيري","Al Mutairi"],["الدوسري","Al Dosari"],["اليامي","Al Yami"],["عثمان","Othman"]];
+const ENTRIES = Array.from({ length: GUESTS }, (_, i) => { const f = F[i % F.length], l = L[(i * 7 + (i >> 2)) % L.length]; return { id: i, ar: f[0] + " " + l[0], en: f[1] + " " + l[1] }; });
+
+const T = {
+  en: { inDraw: "in the draw", toDraw: `${WINNERS} winners to draw`, prog: n => `Winner ${n} of ${WINNERS}`, call: "Please come to the stage", entry: n => `Entry #${n}`,
+    cstIdle: "Every guest's name is in this sphere.", cstSpin: "Drawing a name…", spotIdle: "Every seat holds a guest's name. The spotlight will find one.",
+    mosCaps: ["Every guest has a card. One will be turned over.", "Picking a card…", "This card holds the winner's name."],
+    endPill: "Draw complete", endH: `Congratulations to <span>our ${WINNERS} winners.</span>`, endSub: "Thank you for joining the Super Stars launch." },
+  ar: { inDraw: "في السحب", toDraw: `سيتم سحب ${WINNERS} فائزين`, prog: n => `الفائز ${n} من ${WINNERS}`, call: "تفضل إلى المسرح", entry: n => `المشاركة رقم ${n}`,
+    cstIdle: "أسماء كل الضيوف داخل هذه الكرة.", cstSpin: "جارٍ سحب اسم…", spotIdle: "كل مقعد يحمل اسم ضيف، والضوء سيجد واحدًا.",
+    mosCaps: ["لكل ضيف بطاقة، وستُقلب واحدة منها.", "جارٍ اختيار بطاقة…", "هذه البطاقة تحمل اسم الفائز."],
+    endPill: "انتهى السحب", endH: `مبروك <span>للفائزين العشرة.</span>`, endSub: "شكرًا لانضمامكم إلى حفل إطلاق سوبر ستارز." },
+};
+const DIRS = [
+  { name: "Constellation", hint: "Every guest's name orbits in a sphere. It spins, slows, the hall turns gold, and the sphere turns until the winner's own name faces the room." },
+  { name: "Spotlight", hint: "Every guest has a seat with their name. Three spotlights sweep to a drumroll and close in on the winner's seat." },
+  { name: "From all of you to one", hint: "Every guest has a card. The names show, then every card turns face down to the Super Stars logo. A light chases across the cards and stops on one, which lifts; the host turns it over to reveal the name." },
+];
+
+const $ = id => document.getElementById(id), stage = $("stage"), scene = $("scene");
+const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const wait = ms => new Promise(r => setTimeout(r, calm ? 0 : ms));
+const pick = a => a[Math.floor(Math.random() * a.length)];
+const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const S = { dir: 0, lang: "ar", busy: false, drawn: [], sound: true, ended: false };
+const t = () => T[S.lang];
+const won = e => S.drawn.includes(e.id);
+const pool = () => ENTRIES.filter(e => !won(e));
+const nm = e => Draw.publicName(e[S.lang]), entryTxt = e => t().entry(e.id + 1);
+const draw = () => { const p = pool(), e = p[Draw.randInt(p.length)]; S.drawn.push(e.id); return e; };
+let K = 1, AC;
+function fit() { const top = document.querySelector(".ctl").offsetHeight, k = Math.min(innerWidth / 1920, (innerHeight - top) / 1080); K = k; stage.style.transform = `scale(${k})`; stage.style.left = (innerWidth - 1920 * k) / 2 + "px"; stage.style.top = top + (innerHeight - top - 1080 * k) / 2 + "px"; }
+addEventListener("resize", fit);
+const box = el => { const s = stage.getBoundingClientRect(), r = el.getBoundingClientRect(); return { x: (r.left - s.left) / K, y: (r.top - s.top) / K, w: r.width / K, h: r.height / K }; };
+function bar() {
+  $("tally").innerHTML = `<b>${pool().length}</b>${t().inDraw}`;
+  $("prog").textContent = S.drawn.length ? t().prog(S.drawn.length) : t().toDraw;
+}
+
+function tone(f, d = .6, type = "sine", g = .18, delay = 0, to) {
+  if (!S.sound || calm) return;
+  try { AC ||= new AudioContext(); const o = AC.createOscillator(), v = AC.createGain(), t0 = AC.currentTime + delay;
+    o.type = type; o.frequency.setValueAtTime(f, t0); if (to) o.frequency.exponentialRampToValueAtTime(to, t0 + d);
+    v.gain.setValueAtTime(0, t0); v.gain.linearRampToValueAtTime(g, t0 + .02); v.gain.exponentialRampToValueAtTime(.0001, t0 + d);
+    o.connect(v).connect(AC.destination); o.start(t0); o.stop(t0 + d + .05); } catch {}
+}
+function noise(g = .2, dec = 80, delay = 0) {
+  if (!S.sound || calm) return;
+  try { AC ||= new AudioContext(); const sr = AC.sampleRate, n = Math.round(sr * dec / 1000 * 5), b = AC.createBuffer(1, n, sr), d = b.getChannelData(0);
+    for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.exp(-i / (sr * dec / 1000));
+    const s = AC.createBufferSource(), v = AC.createGain(); v.gain.value = g; s.buffer = b; s.connect(v).connect(AC.destination); s.start(AC.currentTime + delay); } catch {}
+}
+const drumroll = sec => { const n = Math.round(sec / .055); for (let i = 0; i < n; i++) noise(.04 + .3 * i / n, 25, i * .055); };
+const tweenP = (ms, fn) => new Promise(res => { if (calm) { fn(1); return res(); } const t0 = performance.now(); (function f(n) { const p = Math.min(1, (n - t0) / ms); fn(p); p < 1 ? requestAnimationFrame(f) : res(); })(t0); });
+const ease = p => 1 - (1 - p) ** 3;
+
+function confetti(n = 180) {
+  if (calm) return;
+  const c = $("fx"), x = c.getContext("2d"), cols = ["#F5E6A3", "#E6B103", "#CE0E2D", "#FF8300", "#FFFFFF"];
+  const ps = Array.from({ length: n }, () => ({ x: Math.random() * 1920, y: -40 - Math.random() * 500, v: 7 + Math.random() * 9, s: 9 + Math.random() * 13, r: Math.random() * 6, w: (Math.random() - .5) * .25, c: pick(cols) }));
+  const t0 = performance.now();
+  (function f(now) {
+    x.clearRect(0, 0, 1920, 1080);
+    ps.forEach(p => { p.y += p.v; p.r += p.w; x.save(); x.translate(p.x, p.y); x.rotate(p.r); x.fillStyle = p.c; x.beginPath(); for (let i = 0; i < 10; i++) { const a = i * Math.PI / 5, q = i % 2 ? p.s * .45 : p.s; x.lineTo(Math.sin(a) * q, -Math.cos(a) * q); } x.fill(); x.restore(); });
+    if (now - t0 < 3600) requestAnimationFrame(f); else x.clearRect(0, 0, 1920, 1080);
+  })(t0);
+}
+function showWinner(e) {
+  const w = $("win");
+  w.innerHTML = `<span class="pill">${STAR}${t().prog(S.drawn.length)}</span><div class="wname" id="wn">${nm(e)}</div><div class="wtail">${entryTxt(e)}</div><div class="wcall">${t().call}</div>`;
+  w.classList.add("on"); const n = $("wn"); let f = 170; while (n.scrollWidth > 1340 && f > 70) n.style.fontSize = (f -= 6) + "px";
+  [1047, 1319, 1568, 2093].forEach((f, i) => tone(f, .8, "triangle", .16, i * .1)); confetti();
+}
+const hideWinner = () => $("win").classList.remove("on");
+// Fly the winner's own name from where it sits on screen to the centre, then hand over to the winner card.
+async function flyToCard(from, e, fs) {
+  const b = box(from), fl = document.createElement("div"); fl.className = "fly"; fl.textContent = nm(e);
+  Object.assign(fl.style, { left: b.x + "px", top: b.y + "px", width: b.w + "px", height: b.h + "px", fontSize: fs + "px" }); stage.appendChild(fl);
+  const a = fl.animate([{ left: b.x + "px", top: b.y + "px", width: b.w + "px", height: b.h + "px", fontSize: fs + "px", opacity: 1 },
+    { left: "210px", top: "330px", width: "1500px", height: "480px", fontSize: "150px", opacity: 1, offset: .85 },
+    { left: "210px", top: "330px", width: "1500px", height: "480px", fontSize: "150px", opacity: 0 }], { duration: calm ? 1 : 1100, easing: "cubic-bezier(.3,0,.1,1)", fill: "forwards" });
+  await a.finished; fl.remove(); showWinner(e);
+}
+
+/* Constellation: every guest on a sphere. The landing is steered so the winner's own chip ends up facing the room. */
+const Constellation = (() => {
+  let chips = [], sph, cap, raf, ry = 0, rx = -14, speed = 8, last = 0, state = "idle", drive = null, flick;
+  function mount() {
+    const N = ENTRIES.length, R = Math.min(480, 250 + N * .7);
+    scene.innerHTML = `<div class="cst"><div class="sph" id="sph"></div></div><div class="cap" id="cap">${t().cstIdle}</div>`;
+    sph = $("sph"); cap = $("cap");
+    chips = ENTRIES.map((e, i) => {
+      const y = 1 - 2 * (i + .5) / N, r = Math.sqrt(1 - y * y), th = i * Math.PI * (3 - Math.sqrt(5));
+      const yaw = Math.atan2(Math.cos(th) * r, Math.sin(th) * r) * 180 / Math.PI, pitch = Math.asin(y) * 180 / Math.PI;
+      const el = document.createElement("span"); el.className = "chip" + (won(e) ? " won" : ""); el.textContent = nm(e);
+      el.style.transform = `rotateY(${yaw}deg) rotateX(${pitch}deg) translateZ(${R}px)`;
+      sph.appendChild(el); return { e, el, yaw, pitch };
+    });
+    state = "idle"; speed = 8; rx = -14; drive = null; last = performance.now(); cancelAnimationFrame(raf); loop(last);
+  }
+  function loop(now) {
+    const dt = Math.min(.05, (now - last) / 1000); last = now;
+    if (drive) {
+      const p = Math.min(1, (now - drive.t0) / drive.ms), q = ease(p);
+      ry = drive.ry0 + (drive.ry1 - drive.ry0) * q; rx = drive.rx0 + (drive.rx1 - drive.rx0) * q;
+      if (p >= 1) { const d = drive.done; drive = null; speed = 0; d(); }
+    } else ry += speed * dt;
+    sph.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg)`;
+    raf = requestAnimationFrame(loop);
+  }
+  const ramp = (to, ms) => tweenP(ms, (() => { const from = speed; return p => { speed = from + (to - from) * ease(p); }; })());
+  const steer = (ry1, rx1, ms) => new Promise(done => { if (calm) { ry = ry1; rx = rx1; return done(); } drive = { t0: performance.now(), ms, ry0: ry, ry1, rx0: rx, rx1, done }; });
+  async function run() {
+    if (state === "won") {
+      hideWinner(); sph.classList.remove("gone"); cap.style.opacity = 1; cap.textContent = t().cstIdle;
+      await steer(ry + 40, -14, 700); speed = 8; state = "idle"; await wait(300);
+    }
+    const e = draw(); bar(); cap.textContent = t().cstSpin;
+    const target = chips.find(c => c.e.id === e.id), live = chips.filter(c => !won(c.e) || c === target);
+    flick = setInterval(() => { live.forEach(c => c.el.classList.remove("lit")); for (let i = 0; i < 10; i++) pick(live).el.classList.add("lit"); tone(1100 + Math.random() * 500, .06, "triangle", .025); }, 90);
+    tone(110, 2.6, "sawtooth", .03, 0, 420);
+    await ramp(520, 1400); await wait(1800);
+    // Land facing the winner: keep about two more turns so the slowdown matches the spin speed.
+    const base = -target.yaw, ry1 = base + 360 * Math.ceil((ry + 760 - base) / 360);
+    setTimeout(() => stage.classList.add("tell"), calm ? 0 : 2600);
+    await steer(ry1, -target.pitch, 4600);
+    clearInterval(flick); live.forEach(c => c.el.classList.remove("lit"));
+    target.el.classList.add("hit"); cap.style.opacity = 0; noise(.5, 300); tone(65, 1.4, "sine", .5);
+    await wait(900);
+    sph.classList.add("gone"); await flyToCard(target.el, e, 19);
+    target.el.classList.remove("hit"); target.el.classList.add("won"); stage.classList.remove("tell"); speed = 4; state = "won";
+  }
+  return { mount, run, stop: () => { cancelAnimationFrame(raf); clearInterval(flick); } };
+})();
+
+/* Spotlight: every guest has a seat; the spotlights close in on the winner's own seat. */
+const Spotlight = (() => {
+  let cx, raf, last, el = {}, seats = [], L = [], tScale = 1, tt = 0, dark = .62, state = "idle", winSeat, conv = null;
+  function mount() {
+    const N = ENTRIES.length, cols = Math.ceil(Math.sqrt(N * 1.3)), TW = 112, TH = 62, GX = 8, GY = 16;
+    scene.innerHTML = `<div class="arena"><div class="seats" id="seats"></div></div><canvas id="spot" width="1920" height="1080" style="z-index:2"></canvas><div class="cap" id="spcap">${t().spotIdle}</div>`;
+    const host = $("seats"); el = { cap: $("spcap") }; cx = $("spot").getContext("2d");
+    host.style.width = cols * (TW + GX) + "px"; host.style.height = Math.ceil(N / cols) * (TH + GY) + "px";
+    seats = ENTRIES.map((e, i) => { const d = document.createElement("div"); d.className = "seat" + (won(e) ? " won" : ""); d.textContent = nm(e);
+      Object.assign(d.style, { left: (i % cols) * (TW + GX) + "px", top: Math.floor(i / cols) * (TH + GY) + "px", width: TW + "px", height: TH + "px" }); host.appendChild(d); return { e, d }; });
+    fitSeats(host);
+    L = [0, 1, 2].map(i => ({ sx: 360 + i * 600, ph: i * 2.1, x: 960, y: 640, r: 175 }));
+    tScale = 1; dark = .62; conv = null; state = "idle"; last = performance.now(); cancelAnimationFrame(raf); raf = requestAnimationFrame(frame);
+  }
+  // Shrink the tilted arena until every guest's seat is on screen (perspective makes the front rows grow).
+  function fitSeats(host) {
+    const ok = () => { const r = seats.map(s => box(s.d)); return Math.min(...r.map(b => b.x)) >= 50 && Math.max(...r.map(b => b.x + b.w)) <= 1870 && Math.min(...r.map(b => b.y)) >= 160 && Math.max(...r.map(b => b.y + b.h)) <= 1000; };
+    let lo = .15, hi = 1.2;
+    for (let i = 0; i < 14; i++) { const k = (lo + hi) / 2; host.style.transform = `translate(-50%, -50%) rotateX(34deg) scale(${k})`; ok() ? lo = k : hi = k; }
+    host.style.transform = `translate(-50%, -50%) rotateX(34deg) scale(${lo})`;
+  }
+  function frame(now) {
+    const dt = Math.min(.05, (now - last) / 1000); last = now; tt += dt * tScale;
+    if (conv) { const q = ease(Math.min(1, (now - conv.t0) / conv.ms)); L.forEach((l, i) => { l.x = conv.from[i][0] + (conv.tx - conv.from[i][0]) * q; l.y = conv.from[i][1] + (conv.ty - conv.from[i][1]) * q; l.r = 175 - 70 * q; }); }
+    else L.forEach((l, i) => { l.x = 960 + Math.sin(tt * (.5 + i * .17) + l.ph) * 640; l.y = 640 + Math.sin(tt * (.7 + i * .11) + l.ph * 1.3) * 250; });
+    cx.globalCompositeOperation = "source-over"; cx.clearRect(0, 0, 1920, 1080); cx.fillStyle = `rgba(6,1,4,${dark})`; cx.fillRect(0, 0, 1920, 1080);
+    cx.globalCompositeOperation = "destination-out";
+    L.forEach(l => { const g = cx.createRadialGradient(l.x, l.y, 0, l.x, l.y, l.r); g.addColorStop(0, "rgba(0,0,0,1)"); g.addColorStop(.65, "rgba(0,0,0,.85)"); g.addColorStop(1, "rgba(0,0,0,0)");
+      cx.fillStyle = g; cx.beginPath(); cx.ellipse(l.x, l.y, l.r, l.r * .7, 0, 0, 7); cx.fill(); });
+    cx.globalCompositeOperation = "lighter";
+    L.forEach(l => {
+      const g = cx.createLinearGradient(l.sx, -60, l.x, l.y); g.addColorStop(0, "rgba(255,240,205,.26)"); g.addColorStop(1, "rgba(255,240,205,.05)");
+      cx.fillStyle = g; cx.beginPath(); cx.moveTo(l.sx - 30, -60); cx.lineTo(l.sx + 30, -60); cx.lineTo(l.x + l.r * .9, l.y); cx.lineTo(l.x - l.r * .9, l.y); cx.closePath(); cx.fill();
+      const h = cx.createRadialGradient(l.x, l.y, 0, l.x, l.y, l.r); h.addColorStop(0, "rgba(255,225,150,.2)"); h.addColorStop(1, "rgba(255,225,150,0)");
+      cx.fillStyle = h; cx.beginPath(); cx.ellipse(l.x, l.y, l.r, l.r * .7, 0, 0, 7); cx.fill();
+    });
+    raf = requestAnimationFrame(frame);
+  }
+  async function run() {
+    if (state === "won") { hideWinner(); winSeat.d.classList.remove("hit"); winSeat.d.classList.add("won"); dark = .62; conv = null; L.forEach(l => { l.r = 175; }); tScale = 1; el.cap.style.opacity = 1; await wait(500); }
+    const e = draw(); bar(); state = "busy"; el.cap.style.opacity = 0;
+    winSeat = seats.find(s => s.e.id === e.id);
+    if (!calm) {
+      drumroll(4.6);
+      await tweenP(1200, p => { tScale = 1 + 3.5 * p; }); await wait(1500);
+      const b = box(winSeat.d);
+      conv = { t0: performance.now(), ms: 1600, from: L.map(l => [l.x, l.y]), tx: b.x + b.w / 2, ty: b.y + b.h / 2 }; await wait(1600);
+      noise(.6, 420); tone(65, 1.6, "sine", .55);
+      winSeat.d.classList.add("hit"); await tweenP(500, p => { dark = .62 + .3 * p; }); stage.classList.add("tell");
+      await wait(800);
+      await flyToCard(winSeat.d, e, 16); stage.classList.remove("tell");
+    } else showWinner(e);
+    state = "won";
+  }
+  return { mount, run, stop: () => cancelAnimationFrame(raf) };
+})();
+
+/* From all of you to one: every guest gets a card. They show their names, turn face down (Super Stars logo),
+   a light chases across them and stops on one card, which lifts; the host then turns it over. */
+const Mosaic = (() => {
+  let tiles = [], step = 0, cap, cur, fsz, waveT;
+  const place = (tl, r, fs) => { Object.assign(tl.el.style, { left: r.left + "px", top: r.top + "px", width: r.width + "px", height: r.height + "px" }); if (fs) tl.front.style.fontSize = fs + "px"; };
+  const flipDelay = (tl, ms) => { tl.el.querySelector(".in").style.transitionDelay = ms ? ms + "ms" : ""; };
+  function mount() {
+    const N = ENTRIES.length, W = 1800, H = 760, x0 = 60, y0 = 180, g = 8, cols = Math.ceil(Math.sqrt(N * W / H / 2.4));
+    const rows = Math.ceil(N / cols), tw = (W - g * (cols - 1)) / cols, th = Math.min(52, (H - g * (rows - 1)) / rows); fsz = Math.min(15, th * .6, tw / 6.4);
+    scene.innerHTML = `<div id="mos"></div><div class="cap" id="mcap">${t().mosCaps[0]}</div>`;
+    const m = $("mos"); cap = $("mcap");
+    tiles = ENTRIES.map((e, i) => {
+      const el = document.createElement("div"); el.className = "tile" + (won(e) ? " won" : "");
+      el.innerHTML = `<div class="in"><div class="face front">${nm(e)}</div><div class="face back"><img src="assets/logo.png" alt=""></div></div>`;
+      m.appendChild(el); const c = i % cols, r = Math.floor(i / cols);
+      const tl = { e, el, front: el.querySelector(".front"), home: { left: x0 + c * (tw + g), top: y0 + r * (th + g), width: tw, height: th }, wave: (c + r) * 14 };
+      place(tl, tl.home, fsz); return tl;
+    });
+    step = 0;
+    // Everyone's name is visible first, then every card turns face down in a diagonal wave.
+    clearTimeout(waveT);
+    waveT = setTimeout(() => tiles.forEach(x => { if (!won(x.e)) { flipDelay(x, calm ? 0 : x.wave); x.el.classList.add("down"); } }), calm ? 0 : 1000);
+  }
+  async function run() {
+    const T_ = t();
+    if (step === 2) {
+      hideWinner(); cur.el.classList.remove("win"); cur.el.classList.add("won"); cur.front.style.whiteSpace = ""; cur.front.textContent = nm(cur.e);
+      place(cur, cur.home, fsz); tiles.forEach(x => x.el.classList.remove("dim")); cap.textContent = T_.mosCaps[0]; cap.style.opacity = 1; step = 0; await wait(1000);
+    }
+    tiles.forEach(x => flipDelay(x, 0));
+    if (step === 0) {
+      const e = draw(); bar(); cur = tiles.find(x => x.e.id === e.id);
+      const live = tiles.filter(x => !won(x.e) || x === cur);
+      cap.textContent = T_.mosCaps[1];
+      // The light hops between face-down cards, slowing each time, and stops on the winner's card.
+      let delay = 55, prev = null; const hops = calm ? 0 : 34;
+      for (let i = 0; i < hops; i++) {
+        const x = i === hops - 1 ? cur : pick(live.filter(y => y !== prev));
+        prev?.el.classList.remove("lit"); x.el.classList.add("lit"); prev = x;
+        tone(i === hops - 1 ? 1568 : 880 + i * 12, i === hops - 1 ? .5 : .07, "triangle", i === hops - 1 ? .16 : .05);
+        await wait(delay); delay *= 1.06;
+      }
+      await wait(450);
+      cur.el.classList.remove("lit"); tiles.forEach(x => x.el.classList.toggle("dim", x !== cur));
+      cur.el.classList.add("win"); place(cur, { left: 660, top: 300, width: 600, height: 400 });
+      cap.textContent = T_.mosCaps[2]; noise(.3, 120); tone(220, 1, "sine", .1, 0, 440); drumroll(2.6);
+      step = 1;
+    } else if (step === 1) {
+      cap.style.opacity = 0; cur.front.style.whiteSpace = "normal";
+      cur.front.innerHTML = `<span class="pill">${STAR}${T_.prog(S.drawn.length)}</span><span style="display:block;margin-top:18px;white-space:nowrap">${nm(cur.e)}</span><small style="font-size:.34em">${entryTxt(cur.e)}</small><span class="call">${T_.call}</span>`;
+      place(cur, { left: 210, top: 230, width: 1500, height: 680 }, 150);
+      noise(.4, 200); tone(65, 1.4, "sine", .5); await wait(700);
+      cur.el.classList.remove("down"); await wait(500);
+      [1047, 1319, 1568, 2093].forEach((f, i) => tone(f, .8, "triangle", .16, i * .1)); confetti(); step = 2;
+    }
+  }
+  return { mount, run, stop: () => clearTimeout(waveT), label: () => "Reveal the name", mid: () => step === 1 };
+})();
+
+const MODS = [Constellation, Spotlight, Mosaic];
+
+function showEnd() {
+  const list = S.drawn.map(id => ENTRIES[id]);
+  $("end").innerHTML = `<span class="pill">${STAR}${t().endPill}</span><h1>${t().endH}</h1><div class="wgrid">${list.map(e => `<div class="wcard"><b>${nm(e)}</b><span>${entryTxt(e)}</span></div>`).join("")}</div><p>${t().endSub}</p>`;
+  $("end").classList.add("on"); confetti(260);
+}
+function label() {
+  if (S.ended) return "Start again";
+  const m = MODS[S.dir];
+  if (m.mid && m.mid()) return m.label();
+  if (S.drawn.length >= WINNERS) return "Show all winners";
+  return `Draw winner ${S.drawn.length + 1} of ${WINNERS}`;
+}
+function ui() {
+  $("dirs").innerHTML = DIRS.map((d, i) => `<button type="button" data-i="${i}" aria-pressed="${i === S.dir}">${d.name}</button>`).join("");
+  $("langs").innerHTML = [["ar", "العربية"], ["en", "English"]].map(([k, v]) => `<button type="button" data-l="${k}" aria-pressed="${k === S.lang}" lang="${k}">${v}</button>`).join("");
+  $("hint").textContent = DIRS[S.dir].hint + ` Sample of ${GUESTS} guests. Space runs the next step.`;
+  $("go").textContent = label(); $("go").disabled = S.busy;
+  $("snd").textContent = "Sound: " + (S.sound ? "on" : "off");
+  try { history.replaceState(null, "", `#d${S.dir + 1}-${S.lang}`); } catch {}
+}
+function mount() {
+  MODS.forEach(m => m.stop()); hideWinner(); stage.classList.remove("tell"); document.querySelectorAll(".fly").forEach(x => x.remove());
+  document.documentElement.lang = S.lang; stage.dir = S.lang === "ar" ? "rtl" : "ltr";
+  S.busy = false; bar(); MODS[S.dir].mount(); ui();
+}
+async function go() {
+  if (S.busy) return;
+  if (S.ended) { S.drawn = []; S.ended = false; $("end").classList.remove("on"); return mount(); }
+  const m = MODS[S.dir];
+  if (S.drawn.length >= WINNERS && !(m.mid && m.mid())) { hideWinner(); S.ended = true; showEnd(); return ui(); }
+  S.busy = true; ui();
+  try { await m.run(); } finally { S.busy = false; ui(); }
+}
+$("dirs").addEventListener("click", e => { const b = e.target.closest("button"); if (b && !S.busy) { S.dir = +b.dataset.i; mount(); if (S.ended) showEnd(); } });
+$("langs").addEventListener("click", e => { const b = e.target.closest("button"); if (b && !S.busy) { S.lang = b.dataset.l; mount(); if (S.ended) showEnd(); } });
+$("go").addEventListener("click", go);
+$("reset").addEventListener("click", () => { if (S.busy) return; S.drawn = []; S.ended = false; $("end").classList.remove("on"); mount(); });
+$("snd").addEventListener("click", () => { S.sound = !S.sound; ui(); });
+addEventListener("keydown", e => { if (e.code === "Space" && !e.target.closest(".ctl")) { e.preventDefault(); go(); } });
+
+const m = location.hash.match(/^#d([123])-(ar|en)$/);
+if (m) { S.dir = m[1] - 1; S.lang = m[2]; }
+fit(); mount();
+</script>
